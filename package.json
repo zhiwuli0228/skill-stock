@@ -1,0 +1,11 @@
+{
+  "name": "skill-stock",
+  "version": "1.0.0",
+  "description": "Claude Code 自定义 Skill 仓库",
+  "scripts": {
+    "list": "bash scripts/list.sh",
+    "install": "bash scripts/install.sh",
+    "create": "bash scripts/create.sh"
+  },
+  "license": "MIT"
+}

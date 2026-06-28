@@ -1,0 +1,32 @@
+---
+name: <skill-name>
+description: Use when <describe the triggering conditions and symptoms>
+allowed-tools: Bash, Read, Grep, Glob
+argument-hint: <arg1> [optional-arg2]
+---
+
+# <Skill Name>
+
+## Overview
+
+1-2 sentences describing what this skill does and its core principle.
+
+## When to Use
+
+- Symptom or trigger 1
+- Symptom or trigger 2
+- Symptom or trigger 3
+
+**Do NOT use when:**
+- Condition where this skill doesn't apply
+
+## Steps
+
+1. First step
+2. Second step
+3. Third step
+
+## Common Mistakes
+
+- **Mistake**: Description of what goes wrong
+  **Fix**: How to correct it
