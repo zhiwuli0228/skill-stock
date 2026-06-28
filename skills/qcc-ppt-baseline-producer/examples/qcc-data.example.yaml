@@ -1,0 +1,221 @@
+meta:
+  project_name: "【项目名称】"
+  title: "【QCC课题名称】QCC成果汇报"
+  report_title: "【QCC课题名称】QCC成果汇报"
+  subtitle: "【副标题】"
+  department: "【部门/团队】"
+  author: "【汇报人或QCC小组】"
+  date: "【日期】"
+  security_level: "Huawei Confidential"
+
+circle:
+  name: "【圈名】"
+  topic: "【QCC课题名称】"
+  activity_period: "【活动周期】"
+  department: "【部门/团队】"
+  leader: "【圈长】"
+  members:
+    - name: "【成员1】"
+      role: "架构设计"
+      responsibility: "负责治理闭环方案设计"
+    - name: "【成员2】"
+      role: "实验验证"
+      responsibility: "负责实验数据采集与验证"
+    - name: "【成员3】"
+      role: "测试建设"
+      responsibility: "负责自动化测试与质量门禁"
+  evidence_scope:
+    project: "【项目/仓库】"
+    branch: "【分支】"
+    source_dir: "【证据目录】"
+  activity_mechanism:
+    - "每周复盘问题、数据和风险"
+    - "先确认数据，再生成汇报"
+    - "以测试通过和风险关闭作为验收基线"
+
+qcc_process:
+  topic_selection:
+    reason: "【为什么需要做本轮 QCC 选题】"
+    problem_statement: "【围绕哪个核心问题进行头脑风暴】"
+    candidates:
+      - name: "【候选课题1】"
+        description: "【候选方向说明】"
+        importance: 5
+        urgency: 5
+        feasibility: 4
+        data_availability: 5
+        promotion_value: 5
+        evidence_ids: ["EV-001"]
+      - name: "【候选课题2】"
+        description: "【候选方向说明】"
+        importance: 4
+        urgency: 4
+        feasibility: 4
+        data_availability: 4
+        promotion_value: 4
+        evidence_ids: ["EV-001"]
+      - name: "【候选课题3】"
+        description: "【候选方向说明】"
+        importance: 4
+        urgency: 3
+        feasibility: 3
+        data_availability: 3
+        promotion_value: 5
+        evidence_ids: ["EV-001"]
+  current_state:
+    problems:
+      - scenario: "【场景1】"
+        symptom: "【现象】"
+        current_response: "【当前应对】"
+        impact: "【影响】"
+      - scenario: "【场景2】"
+        symptom: "【现象】"
+        current_response: "【当前应对】"
+        impact: "【影响】"
+    sipoc:
+      supplier: "【供应方】"
+      input: "【输入】"
+      process: ["【流程1】", "【流程2】", "【流程3】", "【流程4】", "【流程5】"]
+      output: "【输出】"
+      customer: "【客户/受影响对象】"
+    pareto_items:
+      - name: "【问题类别1】"
+        value: 12
+      - name: "【问题类别2】"
+        value: 8
+      - name: "【问题类别3】"
+        value: 5
+    subprocess_steps:
+      - "【开始/输入】"
+      - "【处理步骤1】"
+      - "【处理步骤2】"
+      - "【异常判断】"
+      - "【处理动作】"
+      - "【结束/复盘】"
+    subprocess_pain_points:
+      - "【痛点1】"
+      - "【痛点2】"
+      - "【痛点3】"
+  target_setting:
+    targets:
+      - metric: "【指标名称】"
+        baseline: "【改善前】"
+        target: "【目标值】"
+        rationale: "【设定依据】"
+        evidence_ids: ["EV-001"]
+  cause_analysis:
+    dimensions:
+      - dimension: "人"
+        cause: "【人员/经验相关原因】"
+      - dimension: "机"
+        cause: "【工具/系统相关原因】"
+      - dimension: "法"
+        cause: "【方法/流程相关原因】"
+      - dimension: "环"
+        cause: "【环境/外部条件相关原因】"
+      - dimension: "测"
+        cause: "【度量/观测相关原因】"
+      - dimension: "管"
+        cause: "【管理/规范相关原因】"
+  key_factor_confirmation:
+    factors:
+      - cause: "【关键要因1】"
+        impact: 5
+        frequency: 5
+        controllability: 4
+        evidence_availability: 5
+        verification_method: "【确认方式】"
+        evidence: "【证据说明】"
+        conclusion: "确认"
+        evidence_ids: ["EV-001"]
+      - cause: "【关键要因2】"
+        impact: 4
+        frequency: 4
+        controllability: 4
+        evidence_availability: 4
+        verification_method: "【确认方式】"
+        evidence: "【证据说明】"
+        conclusion: "确认"
+        evidence_ids: ["EV-001"]
+  countermeasures:
+    items:
+      - key_factor: "【关键要因1】"
+        countermeasure: "【对策1】"
+        implementation: "【实施动作】"
+        validation: "【验证方式】"
+        owner: "【责任人】"
+        deadline: "【完成时间】"
+        scope: "【实施范围】"
+      - key_factor: "【关键要因2】"
+        countermeasure: "【对策2】"
+        implementation: "【实施动作】"
+        validation: "【验证方式】"
+        owner: "【责任人】"
+        deadline: "【完成时间】"
+        scope: "【实施范围】"
+
+# Optional v2.9 method-data override. If absent, the generator derives from qcc_process.
+qcc_methods:
+  affinity_groups:
+    - label: "【聚类A】"
+      ideas: ["【候选方向1】", "【候选方向2】"]
+    - label: "【聚类B】"
+      ideas: ["【候选方向3】", "【候选方向4】"]
+    - label: "【聚类C】"
+      ideas: ["【候选方向5】", "【候选方向6】"]
+  sipoc:
+    supplier: "【供应方】"
+    input: "【输入】"
+    process: ["【流程1】", "【流程2】", "【流程3】", "【流程4】", "【流程5】"]
+    output: "【输出】"
+    customer: "【客户】"
+  pareto_items:
+    - name: "【问题类别1】"
+      value: 12
+    - name: "【问题类别2】"
+      value: 8
+    - name: "【问题类别3】"
+      value: 5
+  subprocess_steps: ["【开始】", "【步骤1】", "【步骤2】", "【判断】", "【处理】", "【结束】"]
+  subprocess_pain_points: ["【痛点1】", "【痛点2】", "【痛点3】"]
+
+results:
+  validation:
+    test_total: "【测试总数】"
+    test_passed: "【通过数】"
+    test_failed: "【失败数】"
+    experiment_count: "【实验组数】"
+    evidence_ids: ["EV-002"]
+  before_after:
+    - metric: "【改善指标】"
+      before: "【改善前】"
+      after: "【改善后】"
+      improvement: "【改善幅度】"
+      evidence_ids: ["EV-002"]
+  risk_closure:
+    - concern: "【风险担忧】"
+      experiment: "【验证实验】"
+      result: "【实验结果】"
+      conclusion: "【关闭/受控结论】"
+      evidence_ids: ["EV-002"]
+
+standardization:
+  assets:
+    - type: "流程标准"
+      content: "【固化流程】"
+    - type: "数据标准"
+      content: "【固化数据口径】"
+    - type: "测试标准"
+      content: "【固化测试门禁】"
+
+promotion:
+  roadmap:
+    - phase: "短期"
+      content:
+        - "【短期动作】"
+    - phase: "中期"
+      content:
+        - "【中期动作】"
+    - phase: "长期"
+      content:
+        - "【长期动作】"

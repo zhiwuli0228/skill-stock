@@ -1,0 +1,68 @@
+template:
+  name: Huawei light 16:9
+  aspect_ratio: "16:9"
+  slide_width_in: 13.333333
+  slide_height_in: 7.5
+
+style:
+  fonts:
+    title: Microsoft YaHei
+    body: Microsoft YaHei
+    fallback: Arial
+  colors:
+    black: "231815"
+    red: "C8102E"
+    orange: "EB5C01"
+    green: "009944"
+    blue: "1F4E79"
+    purple: "7030A0"
+    grey: "898989"
+    light_grey: "F6F6F6"
+    line: "DDDDDD"
+    white: "FFFFFF"
+    red_light: "FDECEE"
+  typography:
+    title_pt: 25
+    subtitle_pt: 9
+    body_min_pt: 8.5
+    body_recommended_pt: 10.0
+    table_min_pt: 8.0
+  margins_in:
+    left: 0.90
+    right: 0.85
+    top: 0.55
+    bottom_safe: 0.62
+  footer:
+    enabled: true
+    default_mode: none      # none | minimal | full; branded template owns footer/logo
+    text: Huawei Confidential
+    logo_position: bottom_right
+    logo_owned_by_template: true
+    generator_add_logo: false
+    page_number_position: bottom_left
+  safe_zones_in:
+    bottom_footer:
+      y_min: 6.88
+      rule: no normal content
+    bottom_right_logo:
+      x_min: 10.80
+      y_min: 6.72
+      rule: no generated logo text or body text
+
+layout_quality:
+  formal_mode_warnings_fail: true
+  max_bottom_conclusion_bars_per_slide: 1
+  conclusion_bar_max_height_in: 0.28
+  min_card_body_font_pt: 9.0
+  min_table_font_pt: 8.5
+  max_unused_vertical_ratio_on_content_slides: 0.28
+  forbid_generated_logo_text: true
+  forbid_content_slide_end_layout: true
+  require_page_role_layout_mapping: true
+  render_required: true
+
+data_quality:
+  formal_mode_placeholders_fail: true
+  formal_mode_oral_only_evidence_fails: true
+  formal_mode_quantitative_before_after_required: true
+  production_claim_requires_l4_evidence: true

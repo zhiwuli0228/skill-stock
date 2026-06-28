@@ -1,0 +1,73 @@
+version: "4.0"
+skill_role: method_compliant_qcc_ppt_producer
+input_priority:
+  custom_template: 1
+  baseline_ppt: 2
+  default_template: 3
+workspace:
+  input_dir: qcc-workspace/input
+  template_dir: qcc-workspace/template
+  output_dir: qcc-workspace/output
+  reports_dir: qcc-workspace/reports
+method_compliance:
+  title_visible_required: true
+  keep_method_pages_when_data_missing: true
+  allow_placeholder_without_fabrication: true
+  mandatory_methods:
+    - phase: 主题评审
+      method: 头脑风暴
+      title_keywords: ["头脑风暴"]
+      visual_form: idea_cards
+    - phase: 主题评审
+      method: 亲和图
+      title_keywords: ["亲和图"]
+      visual_form: affinity_clusters
+    - phase: 主题评审
+      method: 检查表
+      title_keywords: ["检查表"]
+      visual_form: checklist_table
+    - phase: 把握现状
+      method: SIPOC
+      title_keywords: ["SIPOC"]
+      visual_form: sipoc_table
+    - phase: 把握现状
+      method: 柏拉图
+      title_keywords: ["柏拉图", "80%"]
+      visual_form: pareto_chart
+    - phase: 把握现状
+      method: 子流程图
+      title_keywords: ["子流程图"]
+      visual_form: subprocess_flowchart
+    - phase: 根因分析
+      method: 鱼骨图
+      title_keywords: ["鱼骨图"]
+      visual_form: fishbone
+    - phase: 根因分析
+      method: 矩阵图
+      title_keywords: ["矩阵图"]
+      visual_form: cause_matrix
+    - phase: 根因分析
+      method: 根因验证
+      title_keywords: ["根因验证"]
+      visual_form: validation_table
+    - phase: 拟定对策
+      method: 5W
+      title_keywords: ["5W"]
+      visual_form: action_table
+    - phase: 成果固化
+      method: 列表
+      title_keywords: ["成果固化", "标准化清单"]
+      visual_form: standardization_list
+visual_thresholds:
+  min_body_text_pt: 9
+  preferred_body_text_pt: 10.5
+  max_bottom_bar_count_per_slide: 1
+  content_utilization_warn_below: 0.55
+badge_alignment:
+  require_render_check: true
+  prefer_overlay_textbox: true
+  optical_y_correction: true
+redesign_policy:
+  preserve_pass_pages: true
+  redesign_only_high_risk_pages: true
+  no_global_rewrite_without_reason: true

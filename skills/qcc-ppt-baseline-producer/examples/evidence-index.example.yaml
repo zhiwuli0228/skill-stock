@@ -1,0 +1,9 @@
+evidence_index:
+  - id: EV-001
+    type: experiment_report
+    file: "input/source-materials/【实验报告文件】"
+    description: "【证据说明】"
+  - id: EV-002
+    type: test_report
+    file: "input/source-materials/【测试报告文件】"
+    description: "【证据说明】"
