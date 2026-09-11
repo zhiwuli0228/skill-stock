@@ -35,6 +35,14 @@ templates/                     — 新 skill 模板
 CLAUDE.md                      — 项目规范
 ```
 
+## 已收录 Skill
+
+| Skill | 说明 |
+|---|---|
+| `explain-code` | 代码讲解类 skill |
+| `qcc-ppt-baseline-producer` | QCC PPT 基线生产 skill（模板、版式、渲染与格式修复） |
+| `qcc-ppt-method-compliant-producer` | **v5.0**：按标准品管圈十步法生产/增强 PPT；合规检查为结构化分析链校验（主题评价、查检表、柏拉图、目标设定、真因验证、对策评价、效果确认、标准化、检讨与改进），只有方法名词、没有数据的 PPT 会被判 `NON-COMPLIANT` |
+
 ## Skill 规范
 
 每个 skill 是一个包含 `SKILL.md` 的目录，使用 YAML frontmatter：

@@ -1,87 +1,74 @@
-# QCC Page Contract
+# QCC Page Contract (v5.0)
 
-## 1. Purpose
+## 1. 目的
 
-This contract prevents the agent from producing a visually attractive but method-noncompliant QCC PPT.
+本契约把标准十步法（`docs/qcc_methodology.md`）落到页面上：每一页不仅有方法名称，
+还必须承载该步的输入、数据证据与结论。页面标题是审查入口，但不是合规本身。
 
-The page title is part of the acceptance criteria. Reviewers often scan page titles and method forms first; therefore, required method names must be visible in the title area.
+## 2. 完整页面序列
 
-## 2. Recommended complete page sequence
-
-| No. | Required | Page title | Page purpose | Method / form |
+| # | 必需 | 页面标题 | 对应步骤 | 必备字段 |
 |---:|:---:|---|---|---|
-| 01 | Yes | 封面 | QCC topic, team, date | cover |
-| 02 | Yes | 目录 / 活动路线 | Show QCC logic path | roadmap |
-| 03 | Yes | 课题背景与选题理由 | Explain why the topic matters | business background |
-| 04 | Yes | 主题评审｜头脑风暴 | Collect candidate improvement topics | brainstorming cards |
-| 05 | Yes | 主题评审｜亲和图 | Group candidate topics | affinity diagram |
-| 06 | Yes | 主题评审｜检查表 | Select final topic by criteria | checklist / score table |
-| 07 | Yes | 把握现状｜SIPOC | Define scope and upstream/downstream boundary | SIPOC table |
-| 08 | Yes | 把握现状｜柏拉图：识别关键 80% 改进项 | Identify vital few problems | Pareto chart |
-| 09 | Yes | 把握现状｜子流程图 | Expose process breakpoints | subprocess flowchart |
-| 10 | Optional | 目标设定 | Define measurable target | target card / trend |
-| 11 | Yes | 根因分析｜鱼骨图 | Expand possible causes | fishbone diagram |
-| 12 | Yes | 根因分析｜矩阵图 | Score and prioritize causes | matrix diagram |
-| 13 | Yes | 根因验证 | Verify true root causes | validation table |
-| 14 | Yes | 拟定对策｜5W | Convert root causes into actions | 5W table |
-| 15 | Yes | 实施跟踪｜5W | Track implementation | 5W tracking table |
-| 16 | Optional | 效果确认 | Compare before/after result | comparison / trend |
-| 17 | Yes | 成果固化｜标准化清单 | Standardize effective actions | list / checklist |
-| 18 | Optional | 总结与推广 | Summarize learnings and next steps | summary cards |
+| 01 | 是 | 封面 | — | 主题、圈组、日期 |
+| 02 | 是 | 目录 / 活动路线 | — | 十步法路径 |
+| 03 | 是 | 选题背景与理由 | 1 | 背景、问题陈述、影响 |
+| 04 | 是 | 主题选定｜主题评价 | 1 | 候选主题 ≥2、评价维度 ≥3、评分、排序或选定结论 |
+| 05 | 否 | 主题选定｜头脑风暴 / 亲和图 | 1 辅助 | 候选想法、分组（不得替代主题评价） |
+| 06 | 是 | 活动计划｜甘特图 | 2 | PDCA/十步阶段 ≥4、周次或日期、负责人 |
+| 07 | 是 | 现状把握｜现状流程图 | 3 | as-is 流程步骤 ≥3、起止与关键环节 |
+| 08 | 是 | 现状把握｜查检表 | 3 | 判定标准、收集期间、样本量、类别与频次 |
+| 09 | 是 | 现状把握｜数据汇总与层别分析 | 3 | 类别汇总、层别维度、层别数据 |
+| 10 | 是 | 现状把握｜柏拉图：识别关键 80% 改进项 | 3 | 类别降序、频次、累计百分比、80% 标记、改善重点结论 |
+| 11 | 是 | 目标设定 | 4 | 现况值、改善重点、圈能力、目标值、计算关系、目标柱状图、合理性说明 |
+| 12 | 是 | 解析｜特性要因图（鱼骨图） | 5 | 主干问题、4M1E 维度 ≥4、候选要因 |
+| 13 | 是 | 解析｜要因评价 | 5 | 要因清单、评价维度、评分、筛选结论 |
+| 14 | 是 | 解析｜真因验证 | 5 | 要因、数据来源、验证方法、验证结果、结论、未通过回退说明 |
+| 15 | 是 | 对策拟定｜对策评价矩阵 | 6 | 对策 ≥3、评价维度 ≥3、评分、取舍结论 |
+| 16 | 是 | 对策拟定｜5W1H | 6 | What/Why/Who/Where/When/How、对策↔真因映射 |
+| 17 | 是 | 对策实施与检讨 | 7 | 阶段、时间、责任人、进展、跟踪数据、困难与调整 |
+| 18 | 是 | 效果确认｜有形成果 | 8 | 改善前值、改善后值、目标达成率、进步率、前后对比图 |
+| 19 | 是 | 效果确认｜无形成果 | 8 | 圈员能力评分/雷达图 |
+| 20 | 是 | 标准化 | 9 | 标准化文件（名称+类型）、稽核方式（人/频率/方式）、教育训练与推广 |
+| 21 | 是 | 检讨与改进 | 10 | 优点、不足、残余问题、下期主题 |
+| 22 | 否 | 总结与推广 | — | 活动总结、推广范围 |
 
-## 3. Strict title rules
+## 3. 标题规则
 
-Use `阶段｜方法` style for method pages.
-
-Good examples:
-
-- `主题评审｜头脑风暴`
-- `把握现状｜SIPOC`
-- `根因分析｜鱼骨图`
-- `拟定对策｜5W`
-- `成果固化｜标准化清单`
-
-Bad examples:
-
-- `问题分析`
-- `现状说明`
-- `原因分析`
-- `改进措施`
-- `成果展示`
-
-These generic titles are not acceptable unless the required method name is also visible in the title or subtitle.
-
-## 4. Page merging rule
-
-Do not merge mandatory methods by default.
-
-If slide count must be reduced, merging is allowed only when all conditions are met:
-
-1. The title explicitly names every merged method.
-2. Each method retains its recognizable visual form.
-3. Text remains readable after rendering.
-
-Acceptable merged title example:
+方法页统一使用 `阶段｜方法` 形式，例如：
 
 ```text
-根因分析｜鱼骨图 + 矩阵图
+主题选定｜主题评价
+现状把握｜柏拉图：识别关键 80% 改进项
+解析｜真因验证
+对策拟定｜5W1H
+效果确认｜有形成果
 ```
 
-Unacceptable merged title example:
+禁止用通用标题替代方法页：`问题分析`、`现状说明`、`原因分析`、`改进措施`、`成果展示`。
+
+## 4. 页面合并规则
+
+默认不合并必需页面。确需压缩页数时，必须同时满足：
+
+1. 标题显式写出所有被合并的方法名；
+2. 每个方法保留可识别的形态与必备字段；
+3. 渲染后文字与图表不重叠、不溢出。
+
+## 5. 缺数据规则
+
+缺数据时保留页面结构，显式标注缺什么：
 
 ```text
-原因分析
+现状把握｜柏拉图：识别关键 80% 改进项
+待补充：问题类别、各类频次、收集期间与样本量。
+当前页保留柏拉图结构，补齐数据后生成正式图表。
 ```
 
-## 5. Missing-data page rule
+缺数据页在合规检查中判为 `INCOMPLETE`，整体 `NON-COMPLIANT`。
 
-When data is unavailable, keep the method page and mark missing facts clearly.
+## 6. 与旧版（v4.x）的主要差异
 
-Example:
-
-```text
-把握现状｜柏拉图：识别关键 80% 改进项
-
-待补充：问题类别、发生次数、影响权重。
-当前页保留柏拉图结构，待数据补齐后生成正式图表。
-```
+- 新增：主题评价、活动计划、目标设定、效果确认（有形成果+无形成果）、检讨与改进。
+- 移出：SIPOC 不再作为现状把握的必需方法（只可作背景参考）。
+- 归位：查检表从“主题评审”移到“现状把握”。
+- 深化：鱼骨图之后必须经过要因评价与真因验证；5W 升级为 5W1H + 对策评价 + 真因映射。

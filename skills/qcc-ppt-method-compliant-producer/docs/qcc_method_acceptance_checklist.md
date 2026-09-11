@@ -1,53 +1,45 @@
-# QCC Method Acceptance Checklist
+# QCC Method Acceptance Checklist (v5.0)
 
-Use this checklist before delivery.
+交付前逐项检查。任何一项未满足，整体为 `NON-COMPLIANT`。
 
-## 1. Method coverage
+## 1. 十步法证据
 
-- [ ] `主题评审｜头脑风暴` exists.
-- [ ] `主题评审｜亲和图` exists.
-- [ ] `主题评审｜检查表` exists.
-- [ ] `把握现状｜SIPOC` exists.
-- [ ] `把握现状｜柏拉图：识别关键 80% 改进项` exists.
-- [ ] `把握现状｜子流程图` exists.
-- [ ] `根因分析｜鱼骨图` exists.
-- [ ] `根因分析｜矩阵图` exists.
-- [ ] `根因验证` exists.
-- [ ] `拟定对策｜5W` exists.
-- [ ] `实施跟踪｜5W` exists.
-- [ ] `成果固化｜标准化清单` exists.
+- [ ] 1 主题选定：候选主题 ≥2；评价维度 ≥3；有评分、排序/选定结论。
+- [ ] 2 活动计划：阶段 ≥4（PDCA/十步法）；有时间轴与负责人。
+- [ ] 3 现状把握：现状流程图步骤 ≥3；查检表含判定标准/收集期间/样本量；数据汇总类别 ≥3 且含频次；有层别维度；柏拉图含频次、累计百分比、80% 改善重点与结论。
+- [ ] 4 目标设定：现况值、改善重点、圈能力、目标值齐全；有计算关系、目标柱状图与合理性说明。
+- [ ] 5 解析：鱼骨图覆盖 4M1E 中 ≥4 维；要因评价有评分与筛选；真因验证有数据来源、结果与结论；未通过要因有回退说明。
+- [ ] 6 对策拟定：对策 ≥3；评价维度 ≥3 且有评分取舍；5W1H 齐全；每条对策映射到已验证真因。
+- [ ] 7 对策实施与检讨：阶段/时间/责任人/进展；过程数据；困难与调整。
+- [ ] 8 效果确认：改善前值、改善后值、目标达成率、进步率；前后对比图；无形成果雷达图/能力评分。
+- [ ] 9 标准化：标准化文件名称与类型；稽核人/频率/方式；教育训练与推广。
+- [ ] 10 检讨与改进：优点、不足、残余问题、下期主题。
 
-## 2. Title compliance
+## 2. 工具归位
 
-- [ ] Required method names are visible in slide titles or subtitles.
-- [ ] Generic titles such as `问题分析`, `原因分析`, `改进措施` are not used as substitutes for required method pages.
-- [ ] Merged pages explicitly name all merged methods.
+- [ ] 查检表出现在现状把握，而不是主题评审。
+- [ ] SIPOC 只作背景参考，未替代现状流程图/查检表/柏拉图。
+- [ ] 头脑风暴、亲和图只作主题选定辅助，未替代主题评价。
+- [ ] 鱼骨图之后有要因评价与真因验证。
+- [ ] 对策阶段有评价矩阵与 5W1H，而不是只有 5W。
 
-## 3. Visual form compliance
+## 3. 数据与占位
 
-- [ ] Brainstorming page uses idea cards / idea list.
-- [ ] Affinity page uses clustered cards.
-- [ ] Checklist page uses checklist or scoring table.
-- [ ] SIPOC page uses Supplier/Input/Process/Output/Customer columns.
-- [ ] Pareto page uses descending bars and cumulative percentage / 80% marker.
-- [ ] Subprocess page uses flowchart or swimlane.
-- [ ] Fishbone page uses fishbone structure.
-- [ ] Matrix page uses cause scoring matrix.
-- [ ] Root cause verification page uses evidence table.
-- [ ] 5W pages use What/Why/Who/When/Where or execution-tracking equivalent.
-- [ ] Standardization page uses list/checklist.
+- [ ] 没有编造业务数据或结论。
+- [ ] 缺失数据显式标注 `待补充` / `待验证` / `示例结构`，并写明缺什么。
+- [ ] 没有把带占位的页面判为合规（占位页 → INCOMPLETE）。
+- [ ] 每一步的结论都能由本页或前序页数据支撑。
 
-## 4. Data integrity
+## 4. 自动化证据
 
-- [ ] No business data is fabricated.
-- [ ] Unknown data is explicitly marked as `待补充`, `待验证`, or `示例结构`.
-- [ ] Conclusions are supported by page data or clearly marked as placeholders.
+- [ ] `python scripts/check_qcc_method_compliance.py <pptx> --report <md>` 运行成功。
+- [ ] 报告逐步骤输出 `FOUND / WEAK / MISSING / INCOMPLETE`，整体结论为 `PASS`。
+- [ ] 用 `examples/fixtures/keyword-only.qcc.pptx` 自检时判为 `NON-COMPLIANT`（防“名词在场”回归）。
+- [ ] 用 `examples/fixtures/data-complete.qcc.pptx` 自检时判为 `PASS`。
 
-## 5. Visual delivery
+## 5. 视觉交付
 
-- [ ] PPTX is generated.
-- [ ] PDF is generated.
-- [ ] PNG render screenshots are generated.
-- [ ] No obvious text overflow.
-- [ ] No severe page-template drift.
-- [ ] Method compliance report is generated.
+- [ ] PPTX、PDF、PNG 渲染齐备。
+- [ ] 无明显文字溢出、遮挡、模板漂移。
+- [ ] 方法页的图形形态可识别（柏拉图有累计曲线，甘特图有时间轴，雷达图有维度）。
+- [ ] 截图反馈中的缺陷已按 `docs/qcc_screenshot_feedback_gate.md` 修复。

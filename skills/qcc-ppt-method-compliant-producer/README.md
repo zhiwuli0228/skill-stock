@@ -1,10 +1,43 @@
-# qcc-ppt-production-skill v4.3
+# qcc-ppt-method-compliant-producer v5.0
 
-This Skill produces or enhances QCC PPT decks with three gates:
+This Skill produces or enhances QCC (品管圈) PPT decks that satisfy the **standard
+ten-step QCC method** — not just decks that show method names.
 
-1. **QCC method compliance**: mandatory QCC methods must be visible in page titles and visual forms.
-2. **Rendered format quality**: PPT must be rendered to screenshots and reviewed.
-3. **Screenshot feedback loop**: user-marked screenshot defects must be repaired locally and written back into the Skill as reusable defect patterns.
+## v5.0: from "method names" to "analysis chain"
+
+v4.x judged compliance by keyword presence: if a slide title contained `柏拉图`
+or `根因验证`, the deck could pass even without data. v5.0 replaces that with a
+structural check of the standard ten-step chain:
+
+```text
+1  主题选定     主题评价矩阵（维度/权重/评分/排序/选定理由）
+2  活动计划     甘特图 + PDCA + 负责人
+3  现状把握     现状流程图 + 查检表 + 数据汇总 + 层别 + 柏拉图（累计% / 80% 改善重点）
+4  目标设定     现况值 -（现况值 × 改善重点 × 圈能力）= 目标值 + 目标柱状图
+5  解析         鱼骨图（4M1E）→ 要因评价 → 真因验证（数据验证，未通过回退）
+6  对策拟定     对策评价矩阵 + 5W1H + 对策↔已验证真因
+7  对策实施      PDCA 实施跟踪 + 过程数据 + 困难与调整
+8  效果确认     有形成果（改善前后/目标达成率/进步率）+ 无形成果（雷达图）
+9  标准化       标准化文件 + 日常稽核 + 教育训练与推广
+10 检讨与改进   优点/不足/残余问题/下期主题
+```
+
+The compliance report now emits `FOUND / WEAK / MISSING / INCOMPLETE` per step:
+
+- `FOUND` — inputs, analysis evidence and conclusions are present;
+- `WEAK` — the method page exists but required evidence is missing;
+- `MISSING` — the step/page is absent;
+- `INCOMPLETE` — required data is still a `待补充` / `待验证` placeholder.
+
+A deck is compliant only when all ten steps are `FOUND`.
+
+## Three gates
+
+1. **Method chain** — `docs/qcc_methodology.md`, `docs/qcc_page_contract.md`,
+   `docs/qcc_method_compliance_protocol.md`.
+2. **Structural compliance check** — `scripts/check_qcc_method_compliance.py`.
+3. **Rendered quality + screenshot feedback** — `docs/qcc_format_diagnosis_and_repair.md`,
+   `docs/qcc_screenshot_feedback_gate.md`.
 
 ## Typical flow
 
@@ -19,21 +52,27 @@ python scripts/audit_qcc_visual_heuristics.py qcc-workspace/output/qcc-review-re
   --report qcc-workspace/reports/qcc-visual-heuristics-report.md
 ```
 
-Then render to PNG and inspect the montage. If the user provides a screenshot, use `docs/qcc_screenshot_feedback_gate.md` as the repair authority.
+Then render to PNG and inspect the montage. User-provided screenshots are authoritative
+over object-level audits (`docs/qcc_screenshot_feedback_gate.md`).
 
-## v4.3 defect pattern added
+## Fixture self-check
 
-For `主题评审｜头脑风暴`, avoid loose radial connector pages when the screenshot shows connector clutter or uncontrolled whitespace. Prefer:
-
-```text
-[发散主题 anchor]    [候选方向 1] [候选方向 2] [候选方向 3]
-                    [候选方向 4] [候选方向 5] [候选方向 6]
-[发散输出 conclusion]
+```bash
+python scripts/make_qcc_method_fixtures.py --outdir examples/fixtures
+python scripts/selftest_qcc_method_compliance.py --fixtures examples/fixtures
 ```
 
-This keeps the page method-compliant, readable, editable, and stable in formal review screenshots.
+Expected result:
 
+- `examples/fixtures/keyword-only.qcc.pptx` → `NON-COMPLIANT` (WEAK/INCOMPLETE/MISSING)
+- `examples/fixtures/data-complete.qcc.pptx` → `PASS` (ten steps `FOUND`)
 
-## v4.3 ranking-card gate
+This is the regression guard against "method theater" decks.
 
-v4.3 adds a rendered-screenshot rule for compact TOP summary cards. Ranking side cards must use fixed rank/topic/score zones, avoid vertical score wrapping, and keep explanatory notes outside ranked-item rows.
+## What changed vs v4.3
+
+- Compliance is now structural/logical, not keyword-based.
+- 查检表 moved from 主题评审 to 现状把握; SIPOC no longer replaces 现状把握.
+- Added 主题评价、活动计划、目标设定、效果确认、标准化文件、检讨与改进.
+- 鱼骨图 must be followed by 要因评价 and data-based 真因验证.
+- 5W upgraded to 对策评价矩阵 + 5W1H + 对策↔真因映射.

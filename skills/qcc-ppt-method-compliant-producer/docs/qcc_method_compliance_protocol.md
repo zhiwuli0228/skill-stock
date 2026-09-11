@@ -1,84 +1,126 @@
-# QCC Method Compliance Protocol
+# QCC Method Compliance Protocol (v5.0)
 
-## 1. Core principle
+## 0. 核心原则
 
-QCC PPT delivery is not judged only by visual quality. It must also expose the required QCC methods in a form that reviewers can see immediately.
-
-Therefore, every required method must satisfy three conditions:
-
-1. **Title-visible**: method name appears in the slide title or subtitle.
-2. **Form-visible**: the page uses the recognizable visual form of that method.
-3. **Content-bounded**: business facts come from user input or evidence; unknown data is marked as `待补充`, not invented.
-
-## 2. Mandatory method chain
+QCC PPT 的方法合规，不是“页面上有方法名词”，而是**分析链成立**：
 
 ```text
-主题评审：头脑风暴 -> 亲和图 -> 检查表
-把握现状：SIPOC -> 柏拉图（改进关键的 80%） -> 子流程图
-根因分析：鱼骨图 + 矩阵图 -> 根因验证
-拟定对策 / 实施：5W
-成果固化：列表
+每一步的输入 → 分析方法 → 数据/证据 → 输出结论 → 能被下一步消费
 ```
 
-## 3. Method-to-slide requirements
+只要任一步只有名称、没有数据与结论，该步即不成立；缺关键数据时输出必须判
+`INCOMPLETE`，不得判 `PASS`。
 
-| Phase | Method | Slide title must include | Required visual form | Minimum content |
-|---|---|---|---|---|
-| 主题评审 | 头脑风暴 | `头脑风暴` | idea cards or idea list | >= 6 candidate ideas or placeholders |
-| 主题评审 | 亲和图 | `亲和图` | clustered cards with group labels | >= 3 groups |
-| 主题评审 | 检查表 | `检查表` | checklist / scoring table | criteria, score/pass state, conclusion |
-| 把握现状 | SIPOC | `SIPOC` | 5-column SIPOC table | S/I/P/O/C columns |
-| 把握现状 | 柏拉图 | `柏拉图` and `80%` | descending bar chart + cumulative line or 80% marker | issue category, count/impact, cumulative rate |
-| 把握现状 | 子流程图 | `子流程图` | subprocess flowchart or swimlane | start, process steps, handoff, risk point |
-| 根因分析 | 鱼骨图 | `鱼骨图` | fishbone diagram | main problem + cause branches |
-| 根因分析 | 矩阵图 | `矩阵图` | cause evaluation matrix | cause rows + evaluation criteria columns |
-| 根因分析 | 根因验证 | `根因验证` | evidence table | suspected cause, validation method, result |
-| 拟定对策 | 5W | `5W` | action table | What/Why/Who/When/Where |
-| 实施 | 5W | `5W` | execution tracking table | action, owner, date, status, evidence |
-| 成果固化 | 列表 | `成果固化` or `标准化清单` | checklist/list | standard item, owner, effective date, tracking method |
+方法学正本见 `docs/qcc_methodology.md`（标准十步法 + 工具归位 + 每步判定标准）。
 
-## 4. Production rule
+## 1. 判定状态
 
-When generating a new deck, create all mandatory method pages first, then apply visual polish.
+| 状态 | 含义 |
+|---|---|
+| `FOUND` | 该步的方法页存在，且输入、分析证据、输出、判定标准全部成立 |
+| `WEAK` | 方法页存在，但缺少部分必需证据（如无排序、无负责人、无时间轴） |
+| `MISSING` | 该步的方法页或方法名称完全缺失 |
+| `INCOMPLETE` | 方法页存在，但关键数据用 `待补充` / `待验证` / `示例结构` 占位 |
 
-Recommended order:
+整体结论只有 `PASS`（十步全部 `FOUND`）与 `NON-COMPLIANT`（存在任一
+`WEAK` / `MISSING` / `INCOMPLETE`）两种。
 
-1. Topic and background pages
-2. 主题评审 method pages
-3. Current-state method pages
-4. Root-cause method pages
-5. Countermeasure and implementation pages
-6. Effect confirmation pages
-7. Standardization and summary pages
+## 2. 十步合规要求（判定依据）
 
-## 5. Enhancement rule
+### 步骤 1 主题选定
 
-When enhancing an existing deck:
+- 标题包含 `主题选定` / `主题评审`
+- 候选主题 ≥ 2；评价维度 ≥ 3（上级政策、重要性、迫切性、可行性、圈能力等）
+- 有评分数字与排序/选定结论
+- 头脑风暴、亲和图只能作为辅助，不能替代主题评价
 
-1. Extract all slide titles.
-2. Build a method coverage table.
-3. Mark each required method as `FOUND`, `WEAK`, or `MISSING`.
-4. For `MISSING`, add a new method page using the required visual form.
-5. For `WEAK`, rebuild the page title and visual form.
-6. Only after method coverage is complete, polish layout and visual details.
+### 步骤 2 活动计划拟定
 
-## 6. Missing data rule
+- 标题包含 `活动计划` / `甘特图`
+- 覆盖 PDCA 或十步法阶段（≥ 4）
+- 有时间轴（周次/日期）与负责人
 
-If data is missing, do not remove the method page.
+### 步骤 3 现状把握
 
-Use one of these patterns:
+- 标题包含 `现状把握`
+- 现状流程图（as-is）步骤 ≥ 3
+- 查检表含判定标准、收集期间、样本量
+- 数据汇总：问题类别 ≥ 3 且每类有频次
+- 层别分析维度明确
+- 柏拉图：类别降序、频次、累计百分比、80% 改善重点、关键少数结论
+- SIPOC 不能替代以上任一要素
 
-- `待补充：需要用户提供问题类别及频次数据`
-- `待验证：需要补充验证样本或截图证据`
-- `示例结构：仅保留方法框架，不填充业务结论`
+### 步骤 4 目标设定
 
-This preserves audit form compliance while avoiding fabricated business facts.
+- 标题包含 `目标设定`
+- 现况值、改善重点（%）、圈能力（%）、目标值四要素齐全
+- 可见计算关系（公式或分步计算）与目标合理性说明
+- 有目标对比图（柱状图）
 
-## 7. Failure definition
+### 步骤 5 解析（要因分析 → 真因验证）
 
-The output is non-compliant if any of the following is true:
+- 标题包含 `解析` / `鱼骨图` / `特性要因图`
+- 鱼骨图覆盖 4M1E 中 ≥ 4 个维度，主干问题明确
+- 要因评价：对候选要因评分/投票并筛选
+- 真因验证：每条要因有数据来源、验证结果与结论
+- 验证不通过的要因有回退说明
 
-- Required method name does not appear in a visible slide title or subtitle.
-- Required method appears only as a sentence, not as a recognizable method form.
-- The deck has generic pages such as `问题分析` or `改进方案` but lacks the required QCC tool names.
-- The deck is visually polished but fails the method coverage table.
+### 步骤 6 对策拟定
+
+- 标题包含 `对策拟定`
+- 对策 ≥ 3
+- 对策评价维度 ≥ 3（可行性/效益性/经济性/圈能力）且有评分与取舍
+- 5W1H 六要素齐全
+- 每条对策映射到至少一条已验证真因
+
+### 步骤 7 对策实施与检讨
+
+- 标题包含 `实施` / `对策实施`
+- 有阶段、时间、责任人、进展
+- 有过程数据跟踪
+- 有困难与调整说明
+
+### 步骤 8 效果确认
+
+- 标题包含 `效果确认`
+- 有形成果：改善前值、改善后值、目标达成率（%）、进步率（%）
+- 改善前后对比（柏拉图或对比图）
+- 无形成果：圈员能力评分/雷达图
+
+### 步骤 9 标准化
+
+- 标题包含 `标准化`
+- 标准化文件类型（作业标准书/流程图/制度/表单）与名称
+- 日常管理稽核：执行人、频率、方式
+- 教育训练与推广
+
+### 步骤 10 检讨与改进
+
+- 标题包含 `检讨与改进` / `检讨`
+- 活动优点与不足
+- 残余问题
+- 下期主题
+
+## 3. 数据缺失规则
+
+缺数据时：
+
+1. 保留方法页结构；
+2. 在对应字段显式标注 `待补充` / `待验证` / `示例结构`，并写明缺少什么数据；
+3. 该步判定为 `INCOMPLETE`，整体为 `NON-COMPLIANT`；
+4. 数据补齐后重新运行合规检查，直到十步全部 `FOUND`。
+
+**禁止**：用图形外壳、方法名词、视觉美化冒充分析结论；数据未补齐即宣告交付。
+
+## 4. 执行方式
+
+```bash
+python scripts/check_qcc_method_compliance.py \
+  qcc-workspace/output/qcc-review-ready.pptx \
+  --report qcc-workspace/reports/qcc-method-compliance-report.md
+```
+
+报告会逐步骤给出：步骤、方法、状态、页号、缺失项与证据摘录。脚本退出码：
+`0` = PASS，`1` = NON-COMPLIANT，`2` = 用法错误。
+
+合规检查通过后，仍需按 `docs/qcc_screenshot_feedback_gate.md` 做渲染截图复核。
