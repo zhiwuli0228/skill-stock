@@ -174,6 +174,10 @@ qcc-workspace/reports/qcc-format-audit-report.md
 - Do not deliver without render verification, and do not ignore screenshot feedback.
 - Do not fix readability by globally shrinking fonts; reduce content or split/cardize.
 - Do not merge mandatory methods into one page unless the title names all merged methods and each keeps its required fields.
+- Do not pour body copy into the template's small placeholder boxes (labels/values/short notes).
+  Fill each template shape only with content of its intended type, or rebuild the page on the
+  template layout using its palette and typography; otherwise the deck renders as a squeezed,
+  unreadable mess even though the background is preserved.
 
 ## 7. Recommended Commands
 
