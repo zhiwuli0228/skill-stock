@@ -1,187 +1,37 @@
-# QCC Method Visual Patterns
+# QCC Method Visual Patterns (v5.0)
 
-## 1. 主题评审｜头脑风暴
+每个方法页的视觉形态必须能承载该步的**数据与结论**，而不只是显示方法名称。
+形态与必备字段以 `docs/qcc_page_contract.md` 为准。
 
-Use idea cards or a radial idea board.
+## 1. 主题选定｜主题评价
 
-Required elements:
+形态：候选主题 × 评价维度的评分矩阵 + 排序结论。
 
-- Center topic or problem statement
-- Candidate ideas around it
-- No scoring in this page; scoring belongs to checklist or matrix
+必备列：
 
-Avoid:
+- 候选主题（≥2）
+- 评价维度（≥3：上级政策 / 重要性 / 迫切性 / 可行性 / 圈能力 / 效益性）
+- 权重（可选但建议）
+- 各维度评分
+- 加权总分
+- 排序与选定结论
 
-- Turning this page into generic paragraph text
-- Hiding all ideas in a dense table
+避免：
 
-## 2. 主题评审｜亲和图
+- 只有头脑风暴与亲和图，没有评价矩阵；
+- 只有“选定主题”，没有评分与理由。
 
-Use clustered sticky-card groups.
+## 2. 主题选定｜头脑风暴 / 亲和图（辅助页）
 
-Required elements:
+形态：候选想法卡片；亲和图为带组名的聚类卡片。
 
-- Multiple idea cards
-- Group labels
-- Clear grouping logic
+规则：
 
-Recommended layout:
+- 头脑风暴页不评分；评分属于主题评价矩阵。
+- 亲和图必须有分组标签与分组逻辑。
+- 两者都不得替代主题评价页。
 
-```text
-Group A        Group B        Group C
-[idea]         [idea]         [idea]
-[idea]         [idea]         [idea]
-```
-
-## 3. 主题评审｜检查表
-
-Use a criteria table.
-
-Required columns:
-
-- Candidate topic
-- Importance
-- Feasibility
-- Urgency
-- Data availability
-- Final decision / score
-
-## 4. 把握现状｜SIPOC
-
-Use a five-column table.
-
-Required columns:
-
-- Supplier
-- Input
-- Process
-- Output
-- Customer
-
-The process column may contain 3-6 high-level process steps.
-
-## 5. 把握现状｜柏拉图：识别关键 80% 改进项
-
-Use a Pareto visual.
-
-Required elements:
-
-- Issue categories sorted descending by count, impact, or loss
-- Bars for count / impact
-- Cumulative percentage line or cumulative percentage labels
-- 80% reference marker
-- Conclusion naming the vital few problems
-
-If actual data is unavailable, keep a placeholder Pareto frame and state what data is missing.
-
-## 6. 把握现状｜子流程图
-
-Use a subprocess flowchart or swimlane.
-
-Required elements:
-
-- Start and end
-- Process steps
-- Decision / branch if applicable
-- Pain points or abnormal points marked clearly
-
-## 7. 根因分析｜鱼骨图
-
-Use a fishbone diagram.
-
-Recommended branch categories:
-
-- 人 / People
-- 机 / Machine or tool
-- 料 / Material or input
-- 法 / Method
-- 环 / Environment
-- 测 / Measurement
-
-Use the user project context to rename categories when more appropriate.
-
-## 8. 根因分析｜矩阵图
-
-Use a scoring matrix.
-
-Required columns:
-
-- Suspected cause
-- Impact
-- Frequency
-- Controllability
-- Evidence availability
-- Score / priority
-- Keep or discard
-
-The matrix must connect to the fishbone causes.
-
-## 9. 根因验证
-
-Use an evidence table.
-
-Required columns:
-
-- Suspected root cause
-- Validation method
-- Evidence / sample
-- Result
-- Conclusion
-
-Do not claim a cause is verified without evidence or a clearly marked placeholder.
-
-## 10. 拟定对策｜5W
-
-Use a 5W action table.
-
-Required columns:
-
-- What: action
-- Why: reason / linked root cause
-- Who: owner
-- When: deadline
-- Where: scope / affected process
-
-## 11. 实施跟踪｜5W
-
-Use a 5W execution tracking table.
-
-Required columns:
-
-- What
-- Who
-- When
-- Where
-- Status / evidence
-
-## 12. 成果固化｜标准化清单
-
-Use a standardization list or checklist.
-
-Required columns:
-
-- Standardized item
-- Document / rule / script / process
-- Owner
-- Effective date
-- Follow-up check method
-
-Avoid:
-
-- Only writing `持续优化`
-- Only showing a final achievement number without standardization actions
-
-## 13. v4.2 formal-review hardening for brainstorming
-
-For `主题评审｜头脑风暴`, visual elegance is not enough. In rendered screenshots, free-form radial diagrams often create hidden defects:
-
-- diagonal connector clutter;
-- center-card overlap with surrounding cards;
-- excessive white space;
-- weak alignment with the company template;
-- awkward perception that the page is a mind-map rather than a QCC brainstorming output.
-
-Preferred repair pattern:
+首选布局（避免放射状连线图）：
 
 ```text
 [发散主题 anchor]    [候选方向 1] [候选方向 2] [候选方向 3]
@@ -189,12 +39,211 @@ Preferred repair pattern:
 [发散输出 conclusion]
 ```
 
-Use this pattern when the user screenshot indicates visual looseness or connector-line defects.
+## 3. 活动计划｜甘特图
 
+形态：阶段 × 周次/日期的甘特图。
 
-## Ranking summary side-card pattern
+必备元素：
 
-When a QCC method page uses a right-side TOP ranking summary, use this formal-review-safe structure:
+- 阶段 ≥4（PDCA：P / D / C / A，或十步法阶段）
+- 时间轴（周次或日期）
+- 负责人
+
+避免：用目录页或路线图替代活动计划。
+
+## 4. 现状把握｜现状流程图（as-is）
+
+形态：纵向或横向流程图，标出关键环节与异常点。
+
+必备元素：
+
+- 开始 / 结束
+- 流程步骤 ≥3
+- 决策或分支（如有）
+- 异常点/痛点标记
+
+注意：这是**现状**流程，不是改善后的目标流程；不得用子流程图替代。
+
+## 5. 现状把握｜查检表
+
+形态：可执行的查检表（数据收集表），不是主题评分表。
+
+必备元素：
+
+- 判定标准（什么算不合格/异常）
+- 收集期间（起止日期）
+- 样本量
+- 类别与频次记录列
+
+## 6. 现状把握｜数据汇总与层别分析
+
+形态：汇总表 + 层别分组图表。
+
+必备元素：
+
+- 类别汇总与合计
+- 层别维度（人/机/料/法/环/测、班别、时段、区域等）
+- 层别数据与初步结论
+
+## 7. 现状把握｜柏拉图：识别关键 80% 改进项
+
+形态：降序柱状图 + 累计百分比曲线/标注 + 80% 参考线。
+
+必备元素：
+
+- 问题类别（≥3），按频次/影响降序
+- 各类频次或影响值
+- 累计百分比
+- 80% 标记
+- 关键少数（改善重点）结论
+
+负例（会被判 WEAK）：
+
+- 只有“柏拉图”标题与空框架；
+- 有柱状图但没有累计百分比；
+- 有 80% 字样但没有类别与频次数据。
+
+## 8. 目标设定
+
+形态：参数卡 + 目标柱状图 + 计算说明。
+
+必备元素：
+
+- 现况值
+- 改善重点（%）
+- 圈能力（%）
+- 目标值
+- 计算关系：目标值 = 现况值 −（现况值 × 改善重点 × 圈能力）
+- 目标柱状图（现况 vs 目标）
+- 目标合理性说明
+
+## 9. 解析｜特性要因图（鱼骨图）
+
+形态：鱼骨图，主干为改善重点问题。
+
+必备元素：
+
+- 明确的主干问题
+- 4M1E 中 ≥4 个维度分支：人 / 机 / 料 / 法 / 环 / 测
+- 每个维度下 ≥2 条候选要因
+
+注意：鱼骨图只是提出候选要因，**不等于找到根因**。
+
+## 10. 解析｜要因评价
+
+形态：候选要因 × 评价维度的评分矩阵。
+
+必备列：
+
+- 候选要因
+- 评价维度（影响度/频次/可控性/证据可得性等）
+- 评分
+- 总分与排序
+- 要因筛选结论（哪些进入真因验证）
+
+## 11. 解析｜真因验证
+
+形态：数据验证表 + 验证结论。
+
+必备列：
+
+- 要因
+- 数据来源（查检表/样本/现场数据；写明期间或样本量）
+- 验证方法
+- 验证结果（数据）
+- 结论（是否为真因）
+- 未通过时的回退说明
+
+负例（会被判 INCOMPLETE）：
+
+- 只有“疑似原因/验证方法/结果”文字，没有数据来源与数据；
+- 直接宣称某要因为真因，无任何验证证据。
+
+## 12. 对策拟定｜对策评价矩阵
+
+形态：对策 × 评价维度的评分矩阵。
+
+必备列：
+
+- 对策（≥3）
+- 评价维度（≥3：可行性 / 效益性 / 经济性 / 圈能力）
+- 评分
+- 总分与排序
+- 采纳/放弃结论
+
+## 13. 对策拟定｜5W1H
+
+形态：对策实施表 + 真因映射。
+
+必备列：
+
+- What：对策内容
+- Why：对应的**已验证真因**
+- Who：责任人
+- Where：实施范围/环节
+- When：时间/期限
+- How：具体做法与判定标准
+
+## 14. 对策实施与检讨
+
+形态：分阶段实施跟踪表 + 过程数据。
+
+必备元素：
+
+- 阶段（对应 PDCA）
+- 时间与责任人
+- 实施进展
+- 跟踪数据（数量/比例）
+- 困难与调整说明
+
+## 15. 效果确认｜有形成果
+
+形态：改善前后对比图（柱状或柏拉图）+ 关键指标卡。
+
+必备元素：
+
+- 改善前值
+- 改善后值
+- 目标达成率（%）
+- 进步率（%）
+- 改善前后柏拉图或对比图
+
+## 16. 效果确认｜无形成果
+
+形态：雷达图 + 评分表。
+
+必备元素：
+
+- 评价维度（圈员能力：问题意识、数据分析、团队协作、表达沟通等）
+- 活动前/活动后评分
+- 成长结论
+
+## 17. 标准化
+
+形态：标准化文件清单 + 稽核方式。
+
+必备元素：
+
+- 标准化文件名称与类型（作业标准书 / 流程图 / 制度 / 表单）
+- 执行人、稽核频率、稽核方式
+- 教育训练与推广安排
+
+避免：只写“持续优化”或只列一行“标准化清单”。
+
+## 18. 检讨与改进
+
+形态：优点/不足对照 + 后续计划。
+
+必备元素：
+
+- 活动优点
+- 活动不足
+- 残余问题
+- 下期主题或持续改进方向
+
+## 19. 排名摘要侧卡（通用）
+
+当方法页使用右侧 TOP 排名摘要时：
 
 ```text
 TOP 课题摘要
@@ -205,10 +254,10 @@ TOP 课题摘要
 small note outside row stack
 ```
 
-Rules:
+规则：
 
-- Rank badge: fixed color block, centered number.
-- Topic text: one to two lines, no clipping.
-- Score text: suffix with `分`, never vertical wrapping.
-- Notes: outside the row stack; no overlap with any row.
-- If the card is narrow, remove the note rather than reducing row readability.
+- 排名徽标为固定色块，数字居中。
+- 主题文字 1–2 行，不裁切。
+- 分值后缀 `分`，不得纵向换行。
+- 注释在行堆叠加之外，与任何行不重叠。
+- 卡片过窄时优先删注释，不得压缩行可读性。

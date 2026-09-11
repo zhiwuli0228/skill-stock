@@ -1,5 +1,23 @@
 # Changelog
 
+## v5.0 - Standard QCC ten-step analysis chain
+
+- **Breaking**: compliance is no longer "method keywords appear in slide text".
+  The checker now validates the standard ten-step QCC chain structurally.
+- Added `docs/qcc_methodology.md` (ten-step methodology, tool placement, per-step criteria).
+- Rewrote `docs/qcc_method_compliance_protocol.md` with `FOUND / WEAK / MISSING / INCOMPLETE`
+  statuses and per-step evidence requirements.
+- Rewrote `docs/qcc_page_contract.md` and `docs/qcc_method_acceptance_checklist.md` for the
+  ten-step page set and required fields.
+- Added visual patterns for 主题评价、甘特图、现状流程图、查检表、层别、目标设定、要因评价、
+  真因验证、对策评价矩阵、5W1H、有形成果/无形成果、标准化、检讨与改进.
+- Rewrote `scripts/check_qcc_method_compliance.py` to read tables/charts and evaluate
+  step-level evidence; placeholders now produce `INCOMPLETE` instead of `PASS`.
+- Added `scripts/make_qcc_method_fixtures.py` plus keyword-only / data-complete fixtures and
+  `scripts/selftest_qcc_method_compliance.py` as a regression guard.
+- Tool placement fixes: 查检表 belongs to 现状把握; SIPOC is background-only; 5W becomes 5W1H
+  with a countermeasure evaluation matrix and verified-cause mapping.
+
 ## v4.3
 
 - Added ranking-card gate for `TOP` / `TOP 课题摘要` side summaries.

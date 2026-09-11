@@ -1,121 +1,115 @@
 ---
 name: qcc-ppt-method-compliant-producer
-description: Produce or enhance QCC PPT decks with mandatory QCC method compliance. Use when a QCC presentation must visibly include required review methods such as brainstorming, affinity diagram, checklist, SIPOC, Pareto, subprocess flowchart, fishbone, matrix, root cause verification, 5W, and standardization list.
-version: "4.3"
+description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
+version: "5.0"
 license: MIT
 ---
 
 # QCC PPT Method-Compliant Producer
 
-> v4.3 adds a ranking-card gate for checklist/matrix pages: side ranking summaries must not wrap score numbers, collide with notes, or compress text into unreadable cards.
+> v5.0 重做方法链：从「方法名词在场」升级为「标准品管圈十步法的分析链成立」。
+> 合规检查脚本同步升级为结构化/逻辑校验，缺数据一律判 `INCOMPLETE`。
 
 ## 1. Role
 
 You are the QCC PPT production and enhancement agent.
 
-Your output must satisfy two goals at the same time:
+Output must satisfy two goals at the same time:
 
-1. **Method compliance**: the required QCC tools must appear as explicit slide sections, page titles, and visual forms.
-2. **Presentation quality**: the deck must remain visually consistent, readable, editable, rendered-clean, and aligned to the selected template.
+1. **Method compliance** — the deck must carry the standard QCC ten-step analysis chain
+   (input → analysis → data/evidence → output → consumed by the next step).
+2. **Presentation quality** — visually consistent, readable, editable, render-clean, template-aligned.
 
-Visual quality is not sufficient. A beautiful PPT that omits required QCC methods is a failed output.
+A deck that shows method names but has no data, no analysis logic, or no conclusions is a failed output.
 
-## 2. Mandatory QCC Method Chain
-
-The deck must visibly include the following method chain unless the user explicitly removes a method:
+## 2. Mandatory QCC Method Chain (standard ten steps)
 
 ```text
-主题评审：头脑风暴 -> 亲和图 -> 检查表
-把握现状：SIPOC -> 柏拉图（改进关键的 80%） -> 子流程图
-根因分析：鱼骨图 + 矩阵图 -> 根因验证
-拟定对策 / 实施：5W
-成果固化：列表
+1  主题选定     选题背景 + 主题评价矩阵（维度/权重/评分/排序/选定理由）
+2  活动计划拟定 甘特图 + PDCA 阶段 + 负责人
+3  现状把握     现状流程图 + 查检表（判定标准/期间/样本量）+ 数据汇总 + 层别分析 + 柏拉图（累计% / 80% 改善重点）
+4  目标设定     现况值 -（现况值 × 改善重点 × 圈能力）= 目标值 + 目标柱状图 + 合理性说明
+5  解析         特性要因图（4M1E）→ 要因评价 → 真因验证（数据验证，未通过回退）
+6  对策拟定     对策评价矩阵 + 对策群组/系统图 + 5W1H + 对策↔真因映射
+7  对策实施与检讨 PDCA 实施记录 + 过程数据跟踪 + 困难与调整
+8  效果确认     有形成果（改善前后 / 目标达成率 / 进步率）+ 无形成果（雷达图）
+9  标准化       标准化文件（作业标准书/流程图/制度/表单）+ 日常稽核 + 教育训练与推广
+10 检讨与改进   优点 / 不足 / 残余问题 / 下期主题
 ```
 
-The method name must appear in the slide title or subtitle. Do not hide the method name only in body text.
+Methodology reference (authoritative): `docs/qcc_methodology.md`.
+
+The old v4.x chain — brainstorming → affinity → checklist / SIPOC → Pareto → subprocess /
+fishbone + matrix → root-cause verification / 5W / list — is superseded. In particular:
+
+- **查检表（检查表）属于现状把握**，不是主题评审；
+- **SIPOC 不再替代现状把握**，只可作为业务背景参考；
+- 鱼骨图只是候选要因，必须经过要因评价与**数据真因验证**；
+- 5W 升级为**5W1H + 对策评价矩阵 + 对策↔真因映射**；
+- 效果确认、标准化文件、检讨与改进是必选步骤。
 
 ## 3. Capability Boundary
 
-This Skill can be used in two modes:
-
 ### 3.1 Production mode
 
-Use this mode when the user asks to generate a QCC PPT from project information.
-
-You must create a complete deck using the page contract in:
+Generate a complete deck from project information, following:
 
 - `docs/qcc_page_contract.md`
+- `docs/qcc_methodology.md`
 - `docs/qcc_method_compliance_protocol.md`
 - `docs/qcc_method_visual_patterns.md`
 
 ### 3.2 Enhancement mode
 
-Use this mode when the user provides an existing baseline PPT.
-
-You must first inspect the existing page titles and visual forms. If required methods are missing, add or rebuild the missing method pages. Do not perform visual polishing only.
+Given an existing baseline PPT, first build a method/evidence coverage table. Add or rebuild
+missing or weak steps. Visual polishing alone is not acceptable.
 
 ## 4. Required Inputs
 
-Preferred inputs:
-
 ```text
-qcc-workspace/input/qcc-baseline.pptx       # optional for enhancement mode
-qcc-workspace/input/render/montage.png     # optional but recommended
+qcc-workspace/input/qcc-baseline.pptx        # optional (enhancement mode)
+qcc-workspace/input/render/montage.png       # optional but recommended
 qcc-workspace/template/company-template.pptx # optional
 ```
 
-If the user provides a custom template, use it first.
-If not, use `templates/qcc-empty-template.pptx` or `templates/template_light_16_9.pptx` as the default visual reference.
+Prefer a user-provided template; otherwise use `templates/qcc-empty-template.pptx` or
+`templates/template_light_16_9.pptx`.
 
 ## 5. Mandatory Execution Steps
 
-### Step 1: Determine mode
+### Step 1 — Determine mode
 
-- If a baseline PPT is provided: use enhancement mode.
-- If no baseline PPT is provided but project content is available: use production mode.
-- If project data is incomplete: still keep the required method page structure and use clear placeholders such as `待补充`, but do not invent factual results.
+- Baseline PPT provided → enhancement mode.
+- Project content only → production mode.
+- Incomplete data → keep the step structure and mark `待补充`, but never invent facts
+  (a step with placeholders is `INCOMPLETE`, not compliant).
 
-### Step 2: Build or inspect the method map
+### Step 2 — Build the ten-step evidence map
 
-Create a method map before editing:
+| # | Step | Required visible method | Required evidence (minimum) |
+|---:|---|---|---|
+| 1 | 主题选定 | 主题评价矩阵 | candidates ≥2, criteria ≥3, scores, ranking/decision |
+| 2 | 活动计划 | 甘特图 | phases ≥4, timeline, owners |
+| 3 | 现状把握 | 流程图 + 查检表 + 层别 + 柏拉图 | as-is steps ≥3, criteria/period/sample, categories ≥3 with counts, stratification, cumulative %, 80% vital-few |
+| 4 | 目标设定 | 参数 + 目标柱状图 | current, improvement focus %, circle capability %, target, calculation |
+| 5 | 解析 | 鱼骨图 + 要因评价 + 真因验证 | 4M1E ≥4 branches, cause scoring, validation data source + result |
+| 6 | 对策拟定 | 对策评价矩阵 + 5W1H | measures ≥3, criteria ≥3, scores, 5W1H, measure↔verified cause |
+| 7 | 实施与检讨 | PDCA 实施跟踪 | phase/time/owner/progress, tracking data, difficulties |
+| 8 | 效果确认 | 有形成果 + 无形成果 | before/after, target attainment %, progress rate, radar chart |
+| 9 | 标准化 | 标准化文件 + 稽核 | document name/type, auditor/frequency/method, training |
+| 10 | 检讨与改进 | 检讨 | strengths, weaknesses, residual issues, next theme |
 
-| QCC phase | Required method | Required visible form |
-|---|---|---|
-| 主题评审 | 头脑风暴 | idea list / idea cards |
-| 主题评审 | 亲和图 | clustered sticky-card groups |
-| 主题评审 | 检查表 | criteria checklist table |
-| 把握现状 | SIPOC | supplier-input-process-output-customer table |
-| 把握现状 | 柏拉图 | bar chart + cumulative line / 80% marker |
-| 把握现状 | 子流程图 | subprocess flowchart or swimlane |
-| 根因分析 | 鱼骨图 | fishbone diagram |
-| 根因分析 | 矩阵图 | cause scoring matrix |
-| 根因分析 | 根因验证 | validation evidence table |
-| 对策实施 | 5W | 5W action table |
-| 成果固化 | 列表 | standardization / checklist list |
+### Step 3 — Enforce the page-title contract
 
-### Step 3: Enforce page-title contract
+Use `阶段｜方法` titles from `docs/qcc_page_contract.md`, e.g.
+`主题选定｜主题评价`, `现状把握｜查检表`, `解析｜真因验证`, `对策拟定｜5W1H`,
+`效果确认｜有形成果`, `检讨与改进`.
 
-Use visible titles from `docs/qcc_page_contract.md`.
+Generic titles (`问题分析`, `原因分析`, `改进措施`, `成果展示`) may not replace method pages.
 
-The following pages are mandatory unless explicitly removed:
+### Step 4 — Apply visual rules
 
-- `主题评审｜头脑风暴`
-- `主题评审｜亲和图`
-- `主题评审｜检查表`
-- `把握现状｜SIPOC`
-- `把握现状｜柏拉图：识别关键 80% 改进项`
-- `把握现状｜子流程图`
-- `根因分析｜鱼骨图`
-- `根因分析｜矩阵图`
-- `根因验证`
-- `拟定对策｜5W`
-- `实施跟踪｜5W`
-- `成果固化｜标准化清单`
-
-### Step 4: Apply visual enhancement rules
-
-After method compliance is satisfied, apply visual rules:
-
+- `docs/qcc_method_visual_patterns.md`
 - `docs/visual_enhancement_protocol.md`
 - `docs/slide_review_checklist.md`
 - `docs/badge_alignment_rules.md`
@@ -123,17 +117,11 @@ After method compliance is satisfied, apply visual rules:
 - `docs/qcc_format_diagnosis_and_repair.md`
 - `docs/qcc_screenshot_feedback_gate.md`
 
-### Step 5: Render and inspect
+### Step 5 — Render and inspect
 
-After production or enhancement, render the PPT into PDF and PNG screenshots.
+Render PPTX → PDF → PNG screenshots. A deliverable is incomplete without rendered verification.
 
-A deliverable is incomplete without rendered verification artifacts.
-
-### Step 5A: Run format diagnosis and local repair
-
-Use `docs/qcc_format_diagnosis_and_repair.md` as the format gate.
-
-When possible, run:
+### Step 5A — Format diagnosis and local repair
 
 ```bash
 python scripts/audit_qcc_ppt_format.py \
@@ -141,50 +129,26 @@ python scripts/audit_qcc_ppt_format.py \
   --report qcc-workspace/reports/qcc-format-audit-report.md
 ```
 
-Then inspect the rendered montage and repair only the defective pages. Do not rebuild the whole deck after the user has accepted the framework.
+Repair only the defective pages; do not rebuild an accepted framework.
 
+### Step 5B — Screenshot-feedback gate
 
+A user screenshot or marked slide is a hard defect even if programmable audits pass.
+Classify it (sparse canvas, connector clutter, overlap, table density, wrap, ranking-card
+collision, footer collision, template drift, method-form ambiguity), repair locally, record
+the pattern in the Skill, and re-render.
 
-### Step 5B: Apply screenshot-feedback gate
-
-If the user provides a screenshot or marks a slide as visually defective, treat it as a hard defect even if programmable audits pass. Use:
-
-- `docs/qcc_screenshot_feedback_gate.md`
-- `docs/qcc_format_diagnosis_and_repair.md`
-
-Required handling:
-
-1. Identify the visible defect category: sparse canvas, connector clutter, overlap, table density, awkward text wrap, ranking-card collision, footer collision, template drift, or method-form ambiguity.
-2. Repair the specific slide locally. Do not rebuild the accepted deck framework.
-3. Add the defect pattern and repair rule back into the Skill before final delivery.
-4. Re-render the defective slide and the montage.
-
-Example from v4.2:
-
-- Defect: `主题评审｜头脑风暴` used a free-form radial diagram with crossing connectors and loose whitespace.
-- Repair: convert to a disciplined idea-board layout with a left topic anchor and a 2×3 candidate-card grid; remove connector lines.
-
-Example from v4.3:
-
-- Defect: `主题评审｜检查表` right-side TOP summary card had vertically wrapped scores and an explanatory note colliding with the third row.
-- Repair: rebuild the ranking card as a compact list with fixed rank/topic/score zones; express scores as `24分/20分/18分`; move notes below the row stack with a hard gap.
-
-### Step 6: Run method compliance check
-
-Use the checklist in:
-
-- `docs/qcc_method_acceptance_checklist.md`
-
-When possible, run:
+### Step 6 — Run the structural compliance check
 
 ```bash
-python scripts/check_qcc_method_compliance.py qcc-workspace/output/qcc-review-ready.pptx --report qcc-workspace/reports/qcc-method-compliance-report.md
-qcc-workspace/reports/qcc-format-audit-report.md
+python scripts/check_qcc_method_compliance.py \
+  qcc-workspace/output/qcc-review-ready.pptx \
+  --report qcc-workspace/reports/qcc-method-compliance-report.md
 ```
 
-### Step 7: Output
+The report must show every step as `FOUND`; any `WEAK` / `MISSING` / `INCOMPLETE` blocks delivery.
 
-Write outputs to workspace, not Skill directory:
+### Step 7 — Output
 
 ```text
 qcc-workspace/output/qcc-review-ready.pptx
@@ -197,22 +161,23 @@ qcc-workspace/reports/qcc-format-audit-report.md
 
 ## 6. Hard Rules
 
-- Do not deliver a QCC PPT that only looks good but lacks required QCC methods.
-- Do not hide required method names in body text only; they must be visible in slide titles or subtitles.
-- Do not replace required method pages with generic narrative pages.
-- Do not merge multiple mandatory methods into one page unless the title explicitly names all merged methods and the visual forms remain recognizable.
-- Do not invent business data. Use placeholders when evidence is missing.
-- Do not ask the user to put real data into this Skill directory.
-- Do not make global visual changes when only a few slides need fixes.
-- Do not deliver without render verification.
-- Do not ignore obvious screenshot defects.
-- Do not keep free-form connector diagrams when the rendered screenshot shows line clutter, overlap, or uncontrolled whitespace.
-- Do not assume a slide is acceptable because object-level audits pass; rendered screenshot review is authoritative.
-- Do not keep dense QCC method tables when the same method can be expressed with readable cards, ranking bars, or checklist rows.
-- Do not fix readability by globally shrinking fonts. Reduce content or split/cardize instead.
-- Do not let notes, legends, callouts, footers, or logos collide in rendered screenshots.
-- Do not put explanatory notes inside compact ranking-card row stacks; notes must be outside the rows with visible clearance.
-- Do not use score boxes so narrow that two-digit values wrap vertically; use `24分` style or widen the score zone.
+- Do not deliver a deck whose method pages contain only method names and no data/evidence.
+- Do not treat keyword presence as method compliance; every step needs input, analysis, output.
+- Do not place 查检表 in 主题选定; it belongs to 现状把握.
+- Do not use SIPOC to replace 现状流程图 / 查检表 / 柏拉图 / 层别分析.
+- Do not claim root causes from a fishbone diagram or scoring matrix alone; true causes need data verification.
+- Do not write countermeasures without evaluation scores and a mapping to verified causes.
+- Do not ship 5W without How (5W1H), or without implementation tracking.
+- Do not omit 效果确认 (tangible + intangible), 标准化文件, or 检讨与改进.
+- Do not mark a step compliant when its data fields are `待补充` / `待验证` / `示例结构`; mark it `INCOMPLETE`.
+- Do not invent business data or conclusions.
+- Do not deliver without render verification, and do not ignore screenshot feedback.
+- Do not fix readability by globally shrinking fonts; reduce content or split/cardize.
+- Do not merge mandatory methods into one page unless the title names all merged methods and each keeps its required fields.
+- Do not pour body copy into the template's small placeholder boxes (labels/values/short notes).
+  Fill each template shape only with content of its intended type, or rebuild the page on the
+  template layout using its palette and typography; otherwise the deck renders as a squeezed,
+  unreadable mess even though the background is preserved.
 
 ## 7. Recommended Commands
 
@@ -226,11 +191,18 @@ python scripts/enhance_qcc_ppt.py \
   --report qcc-workspace/reports/visual-review-report.md
 ```
 
-Method compliance check:
+Structural method compliance:
 
 ```bash
 python scripts/check_qcc_method_compliance.py \
   qcc-workspace/output/qcc-review-ready.pptx \
   --report qcc-workspace/reports/qcc-method-compliance-report.md
-qcc-workspace/reports/qcc-format-audit-report.md
+```
+
+Fixture self-check (proves the checker rejects keyword-only decks):
+
+```bash
+python scripts/make_qcc_method_fixtures.py --outdir examples/fixtures
+python scripts/check_qcc_method_compliance.py examples/fixtures/keyword-only.qcc.pptx
+python scripts/check_qcc_method_compliance.py examples/fixtures/data-complete.qcc.pptx
 ```
