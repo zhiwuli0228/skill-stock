@@ -68,6 +68,27 @@ python scripts/check_qcc_method_compliance.py deck.pptx --data qcc-workspace/inp
 See `docs/qcc_data_intake.md` for the per-step field checklist, CSV column conventions
 and the data-quality rules.
 
+## Folder-scan intake (v5.6, default)
+
+Ask the user for a **folder of their own records**, not for a filled form. The scan
+inventories the files, extracts tables/text from xlsx/csv/docx/pptx/pdf/txt, matches them
+against the ten-step requirements, and writes an evidence index plus a draft that contains
+only the values it actually found:
+
+```bash
+python scripts/qcc_scan_inputs.py --dir "D:/QCC资料" --workspace qcc-workspace
+python scripts/qcc_pipeline.py --dir "D:/QCC资料" --workspace qcc-workspace
+```
+
+Outputs: `input/qcc-min-data.draft.yaml` (found values only, everything else `null`),
+`reports/data-scan-report.md` (inventory, matches, gaps, model prompt),
+`reports/data-scan-evidence.json` (evidence for the model to read),
+`reports/pipeline-summary.md` (PASS/FAIL/GAP per stage).
+
+Rules: every value must trace back to a source; gaps stay `null`; contradictions are listed
+for human arbitration; computed fields are derived by script, never guessed.
+See `docs/qcc_data_requirements.md` and `docs/qcc_llm_extraction_prompt.md`.
+
 ## Fixture self-check
 
 ```bash

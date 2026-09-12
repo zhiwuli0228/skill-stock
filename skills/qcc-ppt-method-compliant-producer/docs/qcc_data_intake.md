@@ -1,38 +1,91 @@
 # QCC 原始数据获取与交接规范（Data Intake）
 
 目标：让使用者用**最低成本**提供数据，并保证数据足以支撑标准十步法的 PPT 与合规判定。
+默认路径不是"让使用者填表"，而是**让使用者给一个文件夹，由模型自己读文件、抽事实**。
 
-## 1. 三种提供方式
+## 1. 四种提供方式（A 为默认）
 
-| 方式 | 适用场景 | 交接物 |
-|---|---|---|
-| A. YAML 数据文件 | 首选；一次填完十步所需数据 | `qcc-workspace/input/qcc-data.yaml` |
-| B. 表格（CSV/Excel） | 已有查检表/评分表/前后对比数据 | 每张表按下方列名导出，交给智能体合并进 YAML |
-| C. 现有材料 | 已有旧 PPT、Word 报告、纸质查检表照片 | 由智能体抽取为 YAML，**人工确认后再出片** |
+| 方式 | 适用场景 | 使用者只需做 | 交接物 |
+|---|---|---|---|
+| **A. 数据目录（默认）** | 记录已在 Excel / Word / PPT / PDF / CSV 里 | 给出文件夹路径 | `qcc-workspace/input/qcc-min-data.draft.yaml` + `reports/data-scan-report.md` + `reports/data-scan-evidence.json` |
+| B. 最小数据 YAML / 向导 | 数据只在人脑里、没有文件 | 回答约 20 个原始事实问题 | `qcc-workspace/input/qcc-min-data.yaml` |
+| C. 单表补充 | 只差查检表/评分表/前后对比 | 按列名导出 CSV | 交给模型，由扫描器读入 |
+| D. 完整数据 YAML | 已有现成的十步数据文件 | 直接给文件 | `qcc-workspace/input/qcc-data.yaml` |
 
-无论哪种方式，最终都会归一成同一份 `qcc-data.yaml`，再经校验后生成 PPT。
+四条路径最后都会归一成同一份 `qcc-data.yaml`：A/B/C 先得到**原始事实**，
+再由 `derive_qcc_data.py` 计算占比、累计%、改善重点、目标值、达成率、进步率与 p 值。
 
-## 2. 标准流程（4 步）
+## 2. A 路径：数据目录自动扫描（推荐）
+
+### 2.1 命令
 
 ```bash
-# 1. 生成填写模板（或带示例的样例）
-python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml
-python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml --sample
+# 只扫描取证（模型/人工读证据后再填草稿）
+python scripts/qcc_scan_inputs.py --dir "D:/QCC资料" --workspace qcc-workspace
 
-# 2. 填写之后先校验完整性（会列出缺哪些字段）
+# 一条命令跑完整链路：扫描 → 推导 → 校验 → 统计 →（出片后）合规
+python scripts/qcc_pipeline.py --dir "D:/QCC资料" --workspace qcc-workspace
+python scripts/qcc_pipeline.py --min qcc-workspace/input/qcc-min-data.yaml \
+  --deck qcc-workspace/output/qcc-review-ready.pptx
+```
+
+### 2.2 扫描器会做什么
+
+1. **登记清单**：文件名、类型、大小、哈希；
+2. **抽取内容**：`.xlsx/.xlsm`（按工作表）、`.csv/.tsv`、`.docx`（段落 + 表格）、
+   `.pptx`（文本框 + 表格）、`.pdf`（逐页文本）、`.txt/.md/.json/.yaml`；
+3. **匹配字段**：把抽到的表格/文本与十步法必备字段做识别
+   （类别频次、层别、主题评分矩阵、对策表、真因验证表、成本效益、检讨等）；
+4. **产出三件套**：
+   - `input/qcc-min-data.draft.yaml`：**只含证据里确实存在的值**，其余为 `null`；
+   - `reports/data-scan-report.md`：文件清单、识别结果、仍缺失清单、给模型的抽取指令；
+   - `reports/data-scan-evidence.json`：完整证据索引（表格行、文本块、命中位置），供模型读取。
+
+### 2.3 模型的职责（抽取纪律）
+
+模型读 `data-scan-evidence.json`，把值填进 `qcc-min-data.draft.yaml`，并且：
+
+- 每个值都要能指回来源（文件名 + 工作表/页/幻灯片 + 行号/单元格）；
+- 找不到就留 `null`，写进"缺失清单"，**不得编造**；
+- 同一指标出现两个数值 → 两处都列出交人工裁决，不要取平均；
+- 合计/小计/平均行不算事实数据；
+- 计算类字段（占比、累计%、目标值、达成率、进步率、p 值）一律不填，交给脚本。
+
+字段清单见 `docs/qcc_data_requirements.md`；抽取提示模板见 `docs/qcc_llm_extraction_prompt.md`。
+
+### 2.4 扫描器的边界
+
+| 情况 | 处理 |
+|---|---|
+| `.xls / .doc / .ppt` 旧格式 | 无法读取，报告里提示另存为 `xlsx/docx/pptx` |
+| 图片（查检表照片、白板照片） | 只登记清单，需视觉识别后引用，并在报告中标注"来自图片" |
+| 未支持类型 | 只登记清单 |
+| 目录里没有可用表格/文本 | 退出码 1，提示改用向导或单表补充 |
+
+## 3. B 路径：向导 / 最小数据（数据在人脑里）
+
+```bash
+python scripts/qcc_wizard.py --out qcc-workspace/input/qcc-min-data.yaml       # 一问一答
+python scripts/qcc_wizard.py --out demo.yaml --defaults                        # 示例（自检/演示用）
+python scripts/qcc_wizard.py --out data.yaml --answers answers.yaml            # 非交互
+python scripts/qcc_pipeline.py --min qcc-workspace/input/qcc-min-data.yaml
+```
+
+向导只问原始事实（约 20 项），不要求使用者算占比或目标值。
+
+## 4. C/D 路径与统一校验
+
+```bash
+# 已有现成的十步数据文件
 python scripts/validate_qcc_data.py --data qcc-workspace/input/qcc-data.yaml \
   --report qcc-workspace/reports/data-readiness.md
-
-# 3. 复算统计量（原始数据 → χ² / Welch t → p 值）
 python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml \
   --report qcc-workspace/reports/qcc-statistics-report.md
-
-# 4. 出片后做合规校验（把原始数据一起交给检查器）
 python scripts/check_qcc_method_compliance.py qcc-workspace/output/qcc-review-ready.pptx \
   --data qcc-workspace/input/qcc-data.yaml
 ```
 
-## 3. 需要提供哪些数据（按十步法）
+## 5. 需要哪些数据（按十步法）
 
 | 步骤 | 必备数据 | 说明 |
 |---|---|---|
@@ -47,7 +100,7 @@ python scripts/check_qcc_method_compliance.py qcc-workspace/output/qcc-review-re
 | 9 标准化 | `standardization.documents[]`：名称/类型/编号/版本/生效日期/责任人/稽核频率/稽核方式/教育训练 | 另需写明效果维持 |
 | 10 检讨与改进 | `review.strengths/weaknesses/residual/next_topic` | 残余问题应与效果确认中的未达标项对应 |
 
-## 4. 表格（CSV）列名约定
+## 6. 表格（CSV）列名约定
 
 **查检表 / 柏拉图数据**（`counts.csv`）：
 
@@ -72,9 +125,9 @@ python scripts/check_qcc_method_compliance.py qcc-workspace/output/qcc-review-re
 改善后,2026-03-01..2026-03-31,41,300
 ```
 
-把 CSV 交给智能体（或人工）合并进 `qcc-data.yaml` 的对应字段即可。
+把 CSV 放进数据目录即可被扫描器自动读入，不必手工合并。
 
-## 5. 数据质量红线
+## 7. 数据质量红线
 
 1. **不得编造**：缺失项写 `null`，由校验器报为待补；不得用估计值冒充实测值。
 2. **口径一致**：改善前后必须是同一指标、同一判定标准、同样的样本统计方式。
@@ -82,10 +135,14 @@ python scripts/check_qcc_method_compliance.py qcc-workspace/output/qcc-review-re
 4. **可追溯**：查检表要有收集期间、样本量、收集方法与责任人；真因验证要有数据来源。
 5. **人工确认**：由旧材料自动抽取的数据，出片前必须由使用者确认。
 
-## 6. 交付物对照
+## 8. 交付物对照
 
 | 使用者提供 | 脚本产出 | 用途 |
 |---|---|---|
-| `qcc-data.yaml` | `reports/data-readiness.md` | 数据是否齐备、还差什么 |
-| `qcc-data.yaml`（effect） | `reports/qcc-statistics-report.md` | 复算的统计量与 p 值 |
-| 上述两者 + deck | `reports/qcc-method-compliance-report.md` | 结构与逻辑合规判定（含第 12 项统计复算） |
+| 原始数据目录 | `reports/data-scan-report.md` + `reports/data-scan-evidence.json` | 目录里找到了什么、还缺什么、证据在哪 |
+| 原始数据目录 | `input/qcc-min-data.draft.yaml` | 待填的最小数据（只含已找到的值） |
+| 最小数据 | `reports/data-derive-report.md` | 每一步算式（改善重点、目标值、达成率、进步率、p 值） |
+| 最小数据 | `reports/data-readiness.md` | 数据是否齐备、还差什么 |
+| 完整数据 | `reports/qcc-statistics-report.md` | 复算的统计量与 p 值 |
+| 完整数据 + deck | `reports/qcc-method-compliance-report.md` | 结构与逻辑合规判定（含第 12 项统计复算） |
+| 任意环节 | `reports/pipeline-summary.md` | 一次流水线各阶段 PASS/FAIL/GAP 汇总 |

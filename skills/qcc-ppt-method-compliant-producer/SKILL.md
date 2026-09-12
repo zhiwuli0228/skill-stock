@@ -1,7 +1,7 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.5"
+version: "5.6"
 license: MIT
 ---
 
@@ -10,6 +10,7 @@ license: MIT
 > v5.0 重做方法链：从「方法名词在场」升级为「标准品管圈十步法的分析链成立」。
 > v5.1 补上逻辑门：数据一致性、公式复算、指标方向、真因样本量、改善前后可比性；
 > 缺数据判 `INCOMPLETE`，逻辑错误判 `WEAK`，不再放行「术语齐全但算法错误」的稿子。
+> v5.6 把「要使用者填表」换成「要使用者给一个文件夹」：扫描 → 取证 → 模型抽取 → 推导 → 校验。
 
 ## 1. Role
 
@@ -68,11 +69,17 @@ missing or weak steps. Visual polishing alone is not acceptable.
 ## 4. Required Inputs
 
 ```text
-qcc-workspace/input/qcc-data.yaml            # structured ten-step data (preferred)
-qcc-workspace/input/qcc-baseline.pptx        # optional (enhancement mode)
-qcc-workspace/input/render/montage.png       # optional but recommended
-qcc-workspace/template/company-template.pptx # optional
+DATA-DIR/                                     # ★ preferred: the user's own folder of records
+                                              #   (xlsx/csv/docx/pptx/pdf/txt); the Skill scans it
+qcc-workspace/input/qcc-min-data.yaml         # raw facts only (wizard path, when no files exist)
+qcc-workspace/input/qcc-data.yaml             # structured ten-step data (already prepared)
+qcc-workspace/input/qcc-baseline.pptx         # optional (enhancement mode)
+qcc-workspace/input/render/montage.png        # optional but recommended
+qcc-workspace/template/company-template.pptx  # optional
 ```
+
+Prefer the data folder: the user provides records, not answers. Ask for a folder path before
+ever handing over a questionnaire or a template.
 
 Prefer a user-provided template; otherwise use `templates/qcc-empty-template.pptx` or
 `templates/template_light_16_9.pptx`.
@@ -236,8 +243,44 @@ Intake rules, CSV column conventions and the per-step field checklist live in
 `docs/qcc_data_intake.md`. Generated decks must be checked with `--data` so the
 statistics step is recomputed from the same source the user supplied.
 
+### 6.5 Folder-scan intake — the default path (v5.6)
+
+Ask the user for **a folder**, not for a filled form. One command scans it, extracts
+evidence, and derives everything that can be computed:
+
+```bash
+python scripts/qcc_pipeline.py --dir "D:/QCC资料" --workspace qcc-workspace
+```
+
+Under the hood:
+
+| 脚本 | 作用 |
+|---|---|
+| `scripts/qcc_scan_inputs.py` | 扫描目录 → 登记清单 + 抽取表格/文本 + 匹配必备字段 → 写 `qcc-min-data.draft.yaml`、`data-scan-report.md`、`data-scan-evidence.json` |
+| `scripts/derive_qcc_data.py` | 原始事实 → 占比/累计%/80% 改善重点/目标值/达成率/进步率/p 值 |
+| `scripts/validate_qcc_data.py` | 十步法字段齐备性 + 派生一致性（不合就 `GAP`） |
+| `scripts/verify_qcc_statistics.py` | 从原始数据复算统计量 |
+| `scripts/check_qcc_method_compliance.py --data` | 出片后合并第 12 项统计复算 |
+
+Extraction discipline (non-negotiable, see `docs/qcc_llm_extraction_prompt.md`):
+
+1. every filled value must point back to a source (file + sheet/page/slide + row/cell);
+2. missing data stays `null` and is listed as a gap — never estimated or filled with the sample;
+3. contradictory values are both listed for human arbitration, never averaged;
+4. total/subtotal/average rows are not facts;
+5. computed fields (share, cumulative %, target, attainment, progress, p-value) are never
+   filled by the model — `derive_qcc_data.py` computes them;
+6. images need visual recognition before their numbers are used, and must be flagged as such.
+
+Field-by-field specification: `docs/qcc_data_requirements.md`.
+
 ## 7. Hard Rules
 
+- Ask for a **data folder first**; never open with a questionnaire or a blank YAML template.
+- Never treat a scanned value as a fact without a source pointer; never estimate a gap.
+- Never let the model fill computed fields (share / cumulative % / target / attainment /
+  progress / p-value); the scripts compute them, and the checker recomputes them.
+- Report contradictions instead of smoothing them: two conflicting values are two facts to arbitrate.
 - Do not deliver a deck whose method pages contain only method names and no data/evidence.
 - Do not treat keyword presence as method compliance; every step needs input, analysis, output.
 - Do not place 查检表 in 主题选定; it belongs to 现状把握.
@@ -257,6 +300,17 @@ statistics step is recomputed from the same source the user supplied.
   unreadable mess even though the background is preserved.
 
 ## 8. Recommended Commands
+
+Folder-scan intake (default):
+
+```bash
+python scripts/qcc_scan_inputs.py --dir "D:/QCC资料" --workspace qcc-workspace
+python scripts/qcc_pipeline.py --dir "D:/QCC资料" --workspace qcc-workspace
+python scripts/qcc_pipeline.py --min qcc-workspace/input/qcc-min-data.yaml --deck output/deck.pptx
+python scripts/make_qcc_scan_fixture.py --outdir examples/scan-fixture      # 造一个乱目录做演练
+python scripts/selftest_qcc_scan.py                                        # 扫描路径自检
+python scripts/selftest_qcc_minimal.py                                     # 最小数据路径自检
+```
 
 Enhancement mode:
 
