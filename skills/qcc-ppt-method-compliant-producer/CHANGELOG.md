@@ -1,5 +1,19 @@
 # Changelog
 
+## v5.6.2 - 甘特图必须是工作项目排程
+
+验收反馈：「甘特图真的是这样的吗？」——原稿只有 4 条 PDCA 阶段横条，属于里程碑条，
+不是活动计划甘特图。修正：
+
+- `docs/qcc_page_contract.md`：第 06 页要求由「阶段 ≥4」升级为
+  **行＝十步法工作项目（≥6 行）＋ 周次/日期轴 ＋ 负责人 ＋ 计划条 + 实际条 ＋ 进度偏差**，
+  并写明反例（四条阶段横条判 `WEAK`）与「实际条须可指回证据」。
+- `scripts/check_qcc_method_compliance.py`：新增规则「工作项目 ≥6（逐行排十步法工作项，
+  阶段条不算甘特图）」——统计计划页出现的十步法工作项名称 ≥6 且 PDCA 阶段 ≥3。
+  原「阶段 ≥4」规则保留，两者同时生效。
+- 回归确认：`data-complete` 样例仍 PASS，`keyword-only` / `method-theater` 仍
+  NON-COMPLIANT；本次真实项目交付稿在新规则下仍 `overall=PASS`。
+
 ## v5.6.1 - Defect-total model + real-world scan hardening
 
 真实项目（frontend-skill-forge，197 个用例 / 194 个失败）跑通全链路时暴露并修复：

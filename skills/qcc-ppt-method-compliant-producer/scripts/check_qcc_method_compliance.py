@@ -537,6 +537,21 @@ def plan_vs_actual_present(bundle: "Bundle") -> bool:
     return has_actual and has_progress
 
 
+STEP_NAMES = tuple(word for word in PHASE_WORDS if word not in {"P", "D", "C", "A"})
+
+
+def plan_work_packages_present(bundle: "Bundle") -> bool:
+    """A QCC Gantt lists the work packages (十步法工作项目), not just phase bars.
+
+    Four PDCA phase bars are a milestone strip, not an activity-plan Gantt: the
+    plan must name the individual steps so each one can carry an owner, a planned
+    window and an actual window.
+    """
+    steps = count_distinct(bundle.text, STEP_NAMES)
+    phases = count_distinct(bundle.text, ("P", "D", "C", "A"))
+    return steps >= 6 and phases >= 3
+
+
 def check_sheet_collection_documented(bundle: "Bundle") -> bool:
     text = bundle.text
     method = has_word(text, "收集方法", "记录方式", "数据来源", "采集方式", "逐例记录")
@@ -796,6 +811,10 @@ ACTIVITY_PLAN = Step(
         ),
         Rule("负责人", lambda b: has_word(b.text, "负责人", "责任人", "圈员")),
         Rule("计划 vs 实际进度对照", plan_vs_actual_present),
+        Rule(
+            "工作项目 ≥6（逐行排十步法工作项，阶段条不算甘特图）",
+            plan_work_packages_present,
+        ),
     ),
 )
 
