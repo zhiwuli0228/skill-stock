@@ -40,6 +40,16 @@ def load_dataset(path: Path) -> dict:
         data = json.loads(text)
     if not isinstance(data, dict):
         raise SystemExit("dataset must be a mapping")
+    if "effect" in data:
+        effect = data.get("effect") or {}
+        meta = data.get("meta") or {}
+        return {
+            "metric": "effect",
+            "direction": str(meta.get("direction", "lower")),
+            "before": effect.get("before") or {},
+            "after": effect.get("after") or {},
+            "claimed": effect.get("statistics") or {},
+        }
     return data
 
 

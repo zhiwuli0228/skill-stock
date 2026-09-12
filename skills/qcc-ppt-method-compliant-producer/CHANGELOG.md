@@ -1,5 +1,15 @@
 # Changelog
 
+## v5.5 - Data intake workflow
+
+- 新增 `docs/qcc_data_intake.md`：三种数据提供方式（YAML / CSV 表格 / 现有材料）、
+  四步标准流程、按十步法的必备字段清单、CSV 列名约定与五条数据质量红线。
+- 新增 `scripts/init_qcc_data.py`：生成空白填写模板或带示例的样例数据。
+- 新增 `scripts/validate_qcc_data.py`：逐步骤检查数据完整性并输出待补清单，
+  同时做派生校验（频次合计、目标公式、改善方向、统计量）。
+- 新增 `scripts/selftest_qcc_data.py`：空白模板必须报缺、样例必须就绪、统计可复算。
+- `workspace-template/input/qcc-data.example.yaml` 作为随包示例。
+
 ## v5.4 - Raw-data statistics recomputation
 
 - 新增 `scripts/qcc_statistics.py`：自带 χ²（2×2，Yates 校正）与 Welch t 检验，

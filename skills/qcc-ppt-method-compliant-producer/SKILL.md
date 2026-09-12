@@ -1,7 +1,7 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.4"
+version: "5.5"
 license: MIT
 ---
 
@@ -68,6 +68,7 @@ missing or weak steps. Visual polishing alone is not acceptable.
 ## 4. Required Inputs
 
 ```text
+qcc-workspace/input/qcc-data.yaml            # structured ten-step data (preferred)
 qcc-workspace/input/qcc-baseline.pptx        # optional (enhancement mode)
 qcc-workspace/input/render/montage.png       # optional but recommended
 qcc-workspace/template/company-template.pptx # optional
@@ -218,6 +219,22 @@ claimed: {test: chi-square, comparison: "<", p: 0.05}
 python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml
 python scripts/check_qcc_method_compliance.py deck.pptx --data qcc-workspace/input/qcc-data.yaml
 ```
+
+### 6.4 Data intake (v5.5)
+
+Users provide data with the lowest possible effort; the skill normalises it into one
+`qcc-data.yaml` and validates it before production:
+
+```bash
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml           # blank template
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml --sample  # filled example
+python scripts/validate_qcc_data.py --data qcc-workspace/input/qcc-data.yaml      # lists missing fields
+python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml  # recompute p-value
+```
+
+Intake rules, CSV column conventions and the per-step field checklist live in
+`docs/qcc_data_intake.md`. Generated decks must be checked with `--data` so the
+statistics step is recomputed from the same source the user supplied.
 
 ## 7. Hard Rules
 

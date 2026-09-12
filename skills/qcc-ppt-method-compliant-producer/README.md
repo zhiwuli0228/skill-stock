@@ -55,6 +55,19 @@ python scripts/audit_qcc_visual_heuristics.py qcc-workspace/output/qcc-review-re
 Then render to PNG and inspect the montage. User-provided screenshots are authoritative
 over object-level audits (`docs/qcc_screenshot_feedback_gate.md`).
 
+## Data intake (v5.5)
+
+```bash
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml           # blank template
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml --sample  # filled example
+python scripts/validate_qcc_data.py --data qcc-workspace/input/qcc-data.yaml      # missing-field checklist
+python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml  # recompute p-value
+python scripts/check_qcc_method_compliance.py deck.pptx --data qcc-workspace/input/qcc-data.yaml
+```
+
+See `docs/qcc_data_intake.md` for the per-step field checklist, CSV column conventions
+and the data-quality rules.
+
 ## Fixture self-check
 
 ```bash
