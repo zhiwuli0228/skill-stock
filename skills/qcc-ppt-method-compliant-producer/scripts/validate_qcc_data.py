@@ -95,12 +95,19 @@ def main() -> int:
     descending = all(numeric_counts[i] >= numeric_counts[i + 1] for i in range(len(numeric_counts) - 1))
     check("3 现状把握", "类别频次降序", descending, issues)
     if sheet.get("sample") and numeric_counts:
+        sample_value = float(sheet["sample"])
+        defects_total = sum(numeric_counts)
         check(
             "3 现状把握",
-            "频次合计 = 样本量",
-            abs(sum(numeric_counts) - float(sheet["sample"])) <= 1.0,
+            "缺陷类别合计不超过检查总数",
+            defects_total <= sample_value + 1.0,
             issues,
         )
+        if defects_total < sample_value - 1.0:
+            notes.append(
+                f"3 现状把握：缺陷类别合计 {defects_total:g} / 检查总数 {sample_value:g}"
+                f"（现况值 {100.0 * defects_total / sample_value:.1f}%）"
+            )
     focus = current.get("pareto_focus") or {}
     check("3 现状把握", "80% 改善重点覆盖 ≥80%", float(focus.get("cumulative") or 0) >= 80.0, issues)
     check("3 现状把握", "层别数据", is_filled(current.get("strata")), issues)

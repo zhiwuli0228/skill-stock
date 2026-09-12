@@ -49,14 +49,22 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
     total_count = sum(row["count"] for row in categories)
     if sample is None:
         sample = int(total_count)
-        notes.append(f"样本量未提供，取类别合计 {sample}")
-    elif abs(total_count - float(sample)) > 1.0:
-        notes.append(f"注意：类别合计 {total_count:g} 与样本量 {sample:g} 不一致")
+        notes.append(f"样本量未提供，取缺陷类别合计 {sample}")
+    defects_total = total_count if total_count > 0 else float(sample or 0)
+    if abs(total_count - float(sample)) > 1.0:
+        notes.append(
+            f"缺陷类别合计 {total_count:g}，检查总数 {sample:g}："
+            "柏拉图占比按缺陷合计计算，现况值 = 缺陷合计 ÷ 检查总数"
+        )
+    else:
+        notes.append(
+            f"缺陷类别合计 {total_count:g} = 检查总数 {sample:g}（每个检查单位各计一次缺陷）"
+        )
 
     cumulative = 0.0
     cumulative_rows = []
     for row in categories:
-        share = 100.0 * row["count"] / float(sample) if sample else 0.0
+        share = 100.0 * row["count"] / defects_total if defects_total else 0.0
         cumulative += share
         cumulative_rows.append({**row, "share": round(share, 1), "cumulative": round(min(cumulative, 100.0), 1)})
     focus_count = next(
@@ -68,8 +76,11 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
 
     before_defects = current.get("before_defects")
     if before_defects is None:
-        before_defects = cumulative_rows[0]["count"] if cumulative_rows else 0
-        notes.append(f"改善前异常例数取第一大类别 {before_defects:g}")
+        before_defects = defects_total
+        notes.append(
+            f"改善前异常例数取缺陷类别合计 {before_defects:g}"
+            "（查检表另有口径时，可用 current.before_defects 覆盖）"
+        )
     before_rate = 100.0 * float(before_defects) / float(sample) if sample else 0.0
 
     capability = float(target_in.get("capability", 80))
@@ -111,6 +122,13 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
         name = str(row.get("name", ""))
         dimension = str(row.get("dimension", "法"))
         score = row.get("score")
+        result_text = str(row.get("result", ""))
+        conclusion = str(row.get("conclusion") or "").strip()
+        if not conclusion:
+            if any(word in result_text for word in ("不成立", "无显著", "未发现", "排除", "无关")):
+                conclusion = "不成立"
+            else:
+                conclusion = "成立" if result_text else "待确认"
         dimensions.setdefault(dimension, []).append(name)
         if score is not None:
             cause_scores.append({"cause": name, "score": float(score), "selected": float(score) >= 12})
@@ -119,8 +137,8 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
                 "cause": name,
                 "source": str(row.get("source", "查检表")),
                 "method": str(row.get("method", "分类统计")),
-                "result": str(row.get("result", "")),
-                "conclusion": "成立" if row.get("result") else "待确认",
+                "result": result_text,
+                "conclusion": conclusion,
             }
         )
     if not causes:

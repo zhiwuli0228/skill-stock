@@ -316,13 +316,34 @@ def frequency_series(bundle: "Bundle") -> list[float]:
 def cumulative_series(bundle: "Bundle") -> list[float]:
     for table in bundle.tables:
         series = column_series(table, CUMULATIVE_HEADERS)
-        if series:
+        if len(series) >= 3:
             return series
-    if "累计" in bundle.text:
-        values = percents_in(bundle.text)
-        if len(values) >= 3:
-            return values
-    return []
+    # an explicit arrow chain states the whole series in order
+    for slide in bundle.slides:
+        for chain in re.findall(
+            r"((?:\d+(?:\.\d+)?\s*%\s*(?:→|->|➜|>)\s*)+\d+(?:\.\d+)?\s*%)", slide.text
+        ):
+            values = percents_in(chain)
+            if (
+                len(values) >= 3
+                and all(values[index] <= values[index + 1] + 0.05 for index in range(len(values) - 1))
+                and abs(values[-1] - 100.0) <= 0.5
+            ):
+                return values
+    # otherwise use the longest non-decreasing run on a page that talks about 累计
+    best: list[float] = []
+    for slide in bundle.slides:
+        if "累计" not in slide.text:
+            continue
+        run: list[float] = []
+        for value in percents_in(slide.text):
+            if not run or value >= run[-1] - 0.05:
+                run.append(value)
+            else:
+                run = [value]
+            if len(run) > len(best):
+                best = list(run)
+    return best if len(best) >= 3 else []
 
 
 CN_DIGITS = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
@@ -357,10 +378,13 @@ def pareto_counts_match_sample(bundle: "Bundle") -> bool:
     series = frequency_series(bundle)
     if len(series) < 3:
         return True
+    total = sum(series)
     sample = labelled_number(bundle.text, "样本量", "样本", "例数", "n=", "N=")
     if sample is None:
         return True
-    return abs(sum(series) - sample) <= max(1.0, sample * 0.01)
+    # Defects must not exceed the checked population; equality is legitimate when
+    # every checked unit carries one defect, so only an excess is an error.
+    return total <= sample + max(1.0, sample * 0.01)
 
 
 def pareto_cumulative_valid(bundle: "Bundle") -> bool:
@@ -812,7 +836,7 @@ CURRENT_STATE = Step(
             lambda b: has_word(b.text, "改善重点", "关键少数", "关键少数项", "二八"),
         ),
         Rule("柏拉图：频次按降序排列", pareto_counts_descending),
-        Rule("柏拉图：频次合计与样本量一致", pareto_counts_match_sample),
+        Rule("柏拉图：缺陷合计不超过检查总数", pareto_counts_match_sample),
         Rule("柏拉图：累计百分比单调且收敛到 100%", pareto_cumulative_valid),
         Rule("柏拉图：80% 改善重点覆盖 ≥80%", pareto_focus_covers_80),
     ),
@@ -1021,6 +1045,16 @@ def statistics_check_result(slides: Sequence[SlideView], data_path: Path) -> Ste
             data = yaml.safe_load(raw)
         else:
             data = json.loads(raw)
+        if isinstance(data, dict) and "effect" in data:
+            effect = data.get("effect") or {}
+            meta = data.get("meta") or {}
+            data = {
+                "metric": str(meta.get("topic") or "effect"),
+                "direction": str(meta.get("direction", "lower")),
+                "before": effect.get("before") or {},
+                "after": effect.get("after") or {},
+                "claimed": effect.get("statistics") or {},
+            }
         result = qcc_statistics.evaluate_dataset(data)
     except Exception:  # noqa: BLE001 - invalid data must not crash the checker
         return StepResult(

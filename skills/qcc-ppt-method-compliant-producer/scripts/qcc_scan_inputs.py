@@ -44,9 +44,10 @@ EXCEL_EXTS = {".xlsx", ".xlsm"}
 WORD_EXTS = {".docx"}
 DECK_EXTS = {".pptx"}
 PDF_EXTS = {".pdf"}
+HTML_EXTS = {".html", ".htm"}
 LEGACY_EXTS = {".xls", ".doc", ".ppt"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".tif", ".tiff", ".heic"}
-SUPPORTED = TEXT_EXTS | TABLE_EXTS | EXCEL_EXTS | WORD_EXTS | DECK_EXTS | PDF_EXTS
+SUPPORTED = TEXT_EXTS | TABLE_EXTS | EXCEL_EXTS | WORD_EXTS | DECK_EXTS | PDF_EXTS | HTML_EXTS
 SKIP_DIRS = {
     ".git", "__pycache__", "node_modules", ".venv", "venv", ".idea",
     ".vscode", ".mypy_cache", ".pytest_cache", ".svn",
@@ -243,19 +244,136 @@ def extract_pdf(path: Path, rel: str) -> list[Block]:
     return blocks
 
 
+MD_ROW_RE = re.compile(r"^\s*\|(.+)\|\s*$")
+MD_SEPARATOR_RE = re.compile(r"^\s*\|[\s:|-]+\|\s*$")
+
+
+def markdown_row(line: str) -> list[str] | None:
+    match = MD_ROW_RE.match(line)
+    if not match:
+        return None
+    cells = [item.strip() for item in match.group(1).split("|")]
+    if len(cells) < 2:
+        return None
+    return cells
+
+
+def strip_tags(text: str) -> str:
+    return re.sub(r"<[^>]+>", " ", text)
+
+
+def extract_html(path: Path, rel: str) -> list[Block]:
+    try:
+        raw = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        return [Block(rel, "html", "text", note=f"读取失败：{error}")]
+    blocks: list[Block] = []
+    for index, table_html in enumerate(
+        re.findall(r"<table[^>]*>(.*?)</table>", raw, re.S | re.I), 1
+    ):
+        rows: list[list[str]] = []
+        for row_html in re.findall(r"<tr[^>]*>(.*?)</tr>", table_html, re.S | re.I):
+            cells = [
+                re.sub(r"\s+", " ", strip_tags(cell)).strip()
+                for cell in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row_html, re.S | re.I)
+            ]
+            if any(cells):
+                rows.append(cells)
+        if rows:
+            blocks.append(Block(rel, f"html table {index}", "table", rows=rows[:MAX_ROWS]))
+    body = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", raw, flags=re.S | re.I)
+    body = re.sub(r"\s+", " ", strip_tags(body)).strip()
+    if len(body) > 40:
+        blocks.append(Block(rel, "html text", "text", text=body[:MAX_TEXT]))
+    if not blocks:
+        blocks.append(Block(rel, "html", "text", note="HTML 中没有可提取的表格或可见文本"))
+    return blocks
+
+
+def extract_json(path: Path, rel: str) -> list[Block]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, json.JSONDecodeError):
+        return extract_text(path, rel)
+    if isinstance(data, list) and data and all(isinstance(item, dict) for item in data[:5]):
+        headers = list(data[0].keys())
+        rows = [[normalise(item.get(key)) for key in headers] for item in data[:MAX_ROWS]]
+        return [Block(rel, "json array", "table", rows=[headers] + rows)]
+    if isinstance(data, dict):
+        scalars = [
+            [str(key), normalise(value)]
+            for key, value in data.items()
+            if not isinstance(value, (dict, list))
+        ]
+        blocks: list[Block] = []
+        if scalars:
+            blocks.append(Block(rel, "json scalars", "table", rows=scalars))
+        for key, value in data.items():
+            if (
+                isinstance(value, list)
+                and value
+                and all(isinstance(item, dict) for item in value[:5])
+            ):
+                headers = list(value[0].keys())
+                rows = [
+                    [normalise(item.get(field)) for field in headers]
+                    for item in value[:MAX_ROWS]
+                ]
+                blocks.append(Block(rel, f"json {key}[]", "table", rows=[headers] + rows))
+        blocks.append(
+            Block(rel, "json", "text", text=json.dumps(data, ensure_ascii=False)[:MAX_TEXT])
+        )
+        return blocks
+    return [Block(rel, "json", "text", text=json.dumps(data, ensure_ascii=False)[:MAX_TEXT])]
+
+
 def extract_text(path: Path, rel: str) -> list[Block]:
     try:
-        text = path.read_text(encoding="utf-8", errors="replace").strip()
+        text = path.read_text(encoding="utf-8", errors="replace")
     except OSError as error:
         return [Block(rel, "text", "text", note=f"读取失败：{error}")]
-    if not text:
+    if not text.strip():
         return []
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    if len(lines) >= 3 and all(("," in line or "\t" in line) for line in lines[:3]):
-        delimiter = "\t" if "\t" in lines[0] else ","
-        rows = [[item.strip() for item in line.split(delimiter)] for line in lines[:MAX_ROWS]]
-        return [Block(rel, "table-like text", "table", rows=rows)]
-    return [Block(rel, "text", "text", text=text[:MAX_TEXT])]
+    blocks: list[Block] = []
+    text_buffer: list[str] = []
+    table_rows: list[list[str]] = []
+
+    def flush_text() -> None:
+        if text_buffer:
+            blocks.append(
+                Block(rel, f"text {len(blocks) + 1}", "text", text="\n".join(text_buffer)[:MAX_TEXT])
+            )
+            text_buffer.clear()
+
+    def flush_table() -> None:
+        if table_rows:
+            blocks.append(
+                Block(rel, f"table {len(blocks) + 1}", "table", rows=table_rows[:MAX_ROWS])
+            )
+            table_rows.clear()
+
+    for line in text.splitlines():
+        if MD_SEPARATOR_RE.match(line):
+            continue
+        cells = markdown_row(line)
+        if cells is not None:
+            flush_text()
+            table_rows.append(cells)
+            continue
+        flush_table()
+        if line.strip():
+            text_buffer.append(line.rstrip())
+
+    flush_table()
+    flush_text()
+
+    if not any(block.kind == "table" for block in blocks) and len(blocks) == 1:
+        stripped = [line.strip() for line in text.splitlines() if line.strip()]
+        if len(stripped) >= 3 and all(("," in line or "\t" in line) for line in stripped[:3]):
+            delimiter = "\t" if "\t" in stripped[0] else ","
+            rows = [[item.strip() for item in line.split(delimiter)] for line in stripped[:MAX_ROWS]]
+            return [Block(rel, "table-like text", "table", rows=rows)]
+    return blocks
 
 
 def extract_file(path: Path, rel: str) -> list[Block]:
@@ -270,6 +388,10 @@ def extract_file(path: Path, rel: str) -> list[Block]:
         return extract_pptx(path, rel)
     if suffix in PDF_EXTS:
         return extract_pdf(path, rel)
+    if suffix in HTML_EXTS:
+        return extract_html(path, rel)
+    if suffix == ".json":
+        return extract_json(path, rel)
     if suffix in TEXT_EXTS:
         return extract_text(path, rel)
     if suffix in LEGACY_EXTS:
@@ -430,14 +552,18 @@ def detect_categories(block: Block) -> list[Candidate]:
             name = next((item for index, item in enumerate(row) if index != value_column and item), "")
             count = to_number(cell(row, value_column))
             if name and count is not None and not is_total(name) and not name.isdigit():
+                if any(mark in name for mark in ("`", "()", "{", "}", "/", ".ts", ".js", ".py")):
+                    continue  # code-ish identifiers are not defect categories
                 items.append({"name": name, "count": int(count) if float(count).is_integer() else count})
-        if len(items) >= 3:
+        total = sum(item["count"] for item in items)
+        distinct = len({item["count"] for item in items})
+        if len(items) >= 5 and total >= 50 and distinct >= 3:
             out.append(
                 (
                     "current.categories",
                     items,
                     "medium",
-                    f"{block.context}（无表头，按“名称+数值”两列推断）",
+                    f"{block.context}（无表头，按“名称+数值”两列推断，合计 {total}）",
                 )
             )
     return out
@@ -632,21 +758,21 @@ def detect_meta(block: Block) -> list[Candidate]:
         return []
     out: list[Candidate] = []
     patterns = {
-        "meta.topic": ("课题", "主题", "题目"),
-        "meta.team": ("圈组", "圈名", "品管圈", "小组"),
-        "meta.lead": ("圈长", "组长"),
-        "metric": ("指标", "衡量指标"),
-        "meta.period": ("活动周期", "活动期间", "改善期间", "活动时间"),
+        "meta.topic": (("课题",), ("主题", "题目")),
+        "meta.team": (("圈组", "品管圈"), ("圈名", "小组")),
+        "meta.lead": (("圈长", "组长"), ()),
+        "metric": (("衡量指标",), ("指标",)),
+        "meta.period": (("活动周期", "活动期间", "改善期间"), ("活动时间",)),
     }
-    for target, keys in patterns.items():
-        for key in keys:
+    for target, (strong_keys, weak_keys) in patterns.items():
+        for key, confidence in [(k, "medium") for k in strong_keys] + [(k, "low") for k in weak_keys]:
             match = re.search(rf"{key}\s*[：:]\s*([^\n，,；;。｜|：:]{{2,40}})", text)
             if match:
                 value = re.sub(r"[（(][^）)]*[）)]\s*$", "", match.group(1).strip())
                 value = trim_meta(value)
                 if not value:
                     continue
-                out.append((target, value, "medium", f"{block.context}（文本命中「{key}」）"))
+                out.append((target, value, confidence, f"{block.context}（文本命中「{key}」）"))
                 break
     if re.search(r"(越低越好|降低|下降|减少)", text):
         out.append(("meta.direction", "lower", "low", f"{block.context}（改善方向由措辞推断）"))
@@ -771,6 +897,61 @@ def detect_standardization(block: Block) -> list[Candidate]:
     return [("standardization", documents, "medium", f"{block.context}（标准化文件表）")]
 
 
+TEST_RUN_ALIASES = {
+    "total": ("total", "totaltests", "totaltest", "用例总数", "总数", "总计", "tests"),
+    "passed": ("passed", "pass", "成功", "通过"),
+    "failed": ("failed", "unexpected", "failure", "失败", "不通过"),
+    "skipped": ("skipped", "skip", "跳过", "忽略"),
+}
+
+
+def normalise_key(value: str) -> str:
+    return re.sub(r"[^0-9a-z\u4e00-\u9fff]", "", value.lower())
+
+
+def detect_test_run(block: Block) -> list[Candidate]:
+    """Recognise a pass/fail run summary (CI or test report) as a check-sheet batch.
+
+    Signature: one table states the total AND the failed count, and
+    passed + failed + skipped add up to the total when all three are present.
+    """
+    rows = block.rows if block.kind == "table" else []
+    if not rows:
+        return []
+    values: dict[str, float] = {}
+    alias_index = {
+        slot: {normalise_key(alias) for alias in aliases}
+        for slot, aliases in TEST_RUN_ALIASES.items()
+    }
+    for key, value in keyvalue_pairs(rows).items():
+        key_norm = normalise_key(key)
+        for slot, aliases in alias_index.items():
+            if slot in values or key_norm not in aliases:
+                continue
+            number = to_number(value)
+            if number is not None:
+                values[slot] = number
+    if "total" not in values or "failed" not in values:
+        return []
+    total, failed = values["total"], values["failed"]
+    if total <= 0 or failed <= 0:
+        return []
+    parts = [values.get(slot) for slot in ("passed", "failed", "skipped")]
+    if all(part is not None for part in parts):
+        if abs(sum(part for part in parts if part is not None) - total) > max(1.0, 0.02 * total):
+            return []
+    detail = "、".join(
+        f"{label} {values[slot]:g}"
+        for slot, label in (("total", "总数"), ("passed", "通过"), ("failed", "失败"), ("skipped", "跳过"))
+        if slot in values
+    )
+    evidence = f"{block.context}（运行汇总：{detail}）"
+    return [
+        ("current.sample", total, "high", evidence),
+        ("current.before_defects", failed, "high", evidence),
+    ]
+
+
 DETECTORS: tuple[Callable[[Block], list[Candidate]], ...] = (
     detect_categories,
     detect_strata,
@@ -778,6 +959,7 @@ DETECTORS: tuple[Callable[[Block], list[Candidate]], ...] = (
     detect_scores,
     detect_countermeasures,
     detect_verification,
+    detect_test_run,
     detect_meta,
     detect_numbers,
     detect_intangible,
@@ -970,6 +1152,8 @@ def scan(root: Path) -> dict:
 
     draft = blank_minimal()
     for target, candidate in best.items():
+        if CONFIDENCE_RANK.get(candidate["confidence"], 0) < CONFIDENCE_RANK["medium"]:
+            continue  # low-confidence guesses stay in the report, not in the draft
         set_path(draft, target, candidate["value"])
 
     missing = [

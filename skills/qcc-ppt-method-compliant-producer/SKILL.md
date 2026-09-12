@@ -1,7 +1,7 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.6"
+version: "5.6.1"
 license: MIT
 ---
 
@@ -273,6 +273,11 @@ Extraction discipline (non-negotiable, see `docs/qcc_llm_extraction_prompt.md`):
 6. images need visual recognition before their numbers are used, and must be flagged as such.
 
 Field-by-field specification: `docs/qcc_data_requirements.md`.
+
+Two denominators, never mixed (v5.6.1): the Pareto share is computed over the **defect
+total** (sum of the category counts), while the current-state rate is computed over the
+**checked total** (`current.sample`). Defects may be fewer than the checked units
+(194 failures out of 197 cases) but never more; the checker enforces `defects ≤ checked`.
 
 ## 7. Hard Rules
 

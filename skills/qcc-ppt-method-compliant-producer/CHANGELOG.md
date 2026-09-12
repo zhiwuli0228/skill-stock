@@ -1,5 +1,26 @@
 # Changelog
 
+## v5.6.1 - Defect-total model + real-world scan hardening
+
+真实项目（frontend-skill-forge，197 个用例 / 194 个失败）跑通全链路时暴露并修复：
+
+- **缺陷合计 vs 检查总数**：柏拉图占比的分母改为**缺陷类别合计**，现况值的分母保持
+  **检查总数**（`current.sample`）；`derive_qcc_data.py` 默认取缺陷合计作改善前缺陷数，
+  可用 `current.before_defects` 覆盖。`validate_qcc_data.py` 的规则由
+  「频次合计 = 样本量」改为「缺陷类别合计 ≤ 检查总数」，`check_qcc_method_compliance.py`
+  同步改判据（并把规则名改为「缺陷合计不超过检查总数」）。
+- **真因验证结论**：`causes[]` 支持显式 `conclusion`（成立/不成立），未提供时按
+  验证结果文本推断，不再一律判「成立」。
+- **统计复算入口**：`check_qcc_method_compliance.py --data` 现在同时接受 v5.4 原始数据
+  文件和**十步完整数据文件**（自动读取 `effect.before/after`），不再报「无法解析」。
+- **柏拉图累计序列**：改为按「箭头链」或「最长非递减序列」提取，避免同页其他百分比
+  干扰导致的误判。
+- **扫描器增强**（真实语料驱动）：支持 **Markdown 表格**、**HTML 表格 + 可见文本**、
+  **JSON（标量键值表 + 嵌套数组表）**；新增「运行汇总」识别（总数/通过/失败/跳过 →
+  检查总数 + 缺陷数）；低置信度推断不再写入草稿；对文档表格误判加入代码标识与
+  规模约束（≥5 行、合计 ≥50、≥3 个不同取值）。
+- `selftest_qcc_minimal.py` 期望值随新口径更新（改善重点 84.1%、目标值 13.7%）。
+
 ## v5.6 - Folder-scan intake (默认路径：给文件夹，不给表格)
 
 - 新增 `scripts/qcc_scan_inputs.py`：扫描使用者的数据目录，登记清单并抽取
