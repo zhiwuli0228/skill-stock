@@ -1,14 +1,15 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.0"
+version: "5.1"
 license: MIT
 ---
 
 # QCC PPT Method-Compliant Producer
 
 > v5.0 重做方法链：从「方法名词在场」升级为「标准品管圈十步法的分析链成立」。
-> 合规检查脚本同步升级为结构化/逻辑校验，缺数据一律判 `INCOMPLETE`。
+> v5.1 补上逻辑门：数据一致性、公式复算、指标方向、真因样本量、改善前后可比性；
+> 缺数据判 `INCOMPLETE`，逻辑错误判 `WEAK`，不再放行「术语齐全但算法错误」的稿子。
 
 ## 1. Role
 
@@ -29,7 +30,7 @@ A deck that shows method names but has no data, no analysis logic, or no conclus
 2  活动计划拟定 甘特图 + PDCA 阶段 + 负责人
 3  现状把握     现状流程图 + 查检表（判定标准/期间/样本量）+ 数据汇总 + 层别分析 + 柏拉图（累计% / 80% 改善重点）
 4  目标设定     现况值 -（现况值 × 改善重点 × 圈能力）= 目标值 + 目标柱状图 + 合理性说明
-5  解析         特性要因图（4M1E）→ 要因评价 → 真因验证（数据验证，未通过回退）
+5  解析         特性要因图（5M1E / 6M）→ 要因评价 → 真因验证（数据验证，未通过回退）
 6  对策拟定     对策评价矩阵 + 对策群组/系统图 + 5W1H + 对策↔真因映射
 7  对策实施与检讨 PDCA 实施记录 + 过程数据跟踪 + 困难与调整
 8  效果确认     有形成果（改善前后 / 目标达成率 / 进步率）+ 无形成果（雷达图）
@@ -92,7 +93,7 @@ Prefer a user-provided template; otherwise use `templates/qcc-empty-template.ppt
 | 2 | 活动计划 | 甘特图 | phases ≥4, timeline, owners |
 | 3 | 现状把握 | 流程图 + 查检表 + 层别 + 柏拉图 | as-is steps ≥3, criteria/period/sample, categories ≥3 with counts, stratification, cumulative %, 80% vital-few |
 | 4 | 目标设定 | 参数 + 目标柱状图 | current, improvement focus %, circle capability %, target, calculation |
-| 5 | 解析 | 鱼骨图 + 要因评价 + 真因验证 | 4M1E ≥4 branches, cause scoring, validation data source + result |
+| 5 | 解析 | 鱼骨图 + 要因评价 + 真因验证 | 5M1E/6M ≥4 branches, cause scoring, validation data source + result |
 | 6 | 对策拟定 | 对策评价矩阵 + 5W1H | measures ≥3, criteria ≥3, scores, 5W1H, measure↔verified cause |
 | 7 | 实施与检讨 | PDCA 实施跟踪 | phase/time/owner/progress, tracking data, difficulties |
 | 8 | 效果确认 | 有形成果 + 无形成果 | before/after, target attainment %, progress rate, radar chart |
@@ -159,7 +160,25 @@ qcc-workspace/reports/qcc-method-compliance-report.md
 qcc-workspace/reports/qcc-format-audit-report.md
 ```
 
-## 6. Hard Rules
+## 6. Logic gates (v5.1)
+
+The checker now recomputes the analysis instead of only looking for keywords:
+
+1. **Pareto (现状把握)** — categories sorted descending; counts sum = sample size;
+   cumulative percentages monotonic and converging to 100%; the 80% improvement focus
+   covers ≥80%.
+2. **Target (目标设定)** — parameters within 0–100%; target direction matches the metric
+   direction (lower-is-better ⇒ target < current); the target value can be recomputed from
+   the stated formula (tolerance 0.5 percentage points).
+3. **True-cause verification (解析)** — sample size ≥30, or an explicit sampling basis
+   (全量/普查/抽样依据).
+4. **Effect confirmation (效果确认)** — after must beat before; attainment and progress
+   rates are recomputed from the before/after/target values; the post-improvement period and
+   sample size are required.
+
+Page-number badges and the sample-data footer are excluded from numeric extraction.
+
+## 7. Hard Rules
 
 - Do not deliver a deck whose method pages contain only method names and no data/evidence.
 - Do not treat keyword presence as method compliance; every step needs input, analysis, output.
@@ -179,7 +198,7 @@ qcc-workspace/reports/qcc-format-audit-report.md
   template layout using its palette and typography; otherwise the deck renders as a squeezed,
   unreadable mess even though the background is preserved.
 
-## 7. Recommended Commands
+## 8. Recommended Commands
 
 Enhancement mode:
 

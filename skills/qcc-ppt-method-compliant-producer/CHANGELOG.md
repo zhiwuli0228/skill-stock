@@ -1,5 +1,22 @@
 # Changelog
 
+## v5.1 - Method logic gates
+
+- Added numeric/logic verification instead of keyword presence only:
+  - Pareto: descending categories, counts sum = sample size, cumulative monotonic to 100%,
+    and the 80% improvement focus covering >=80%;
+  - target: parameter range, direction consistency, and formula recomputation (tolerance 0.5pt);
+  - true-cause verification: sample size >=30 or an explicit sampling basis;
+  - effect confirmation: after must beat before, attainment/progress recomputation, and a
+    post-improvement period + sample size.
+- Step matching now uses the slide title (largest-font text), so roadmap/plan pages no longer
+  bleed into other steps' evidence bundles.
+- Page-number badges and the sample-data footer are excluded from numeric extraction.
+- Terminology fix: fishbone dimensions are 5M1E (Man/Machine/Material/Method/Measurement) or
+  6M when Environment is added — not "4M1E (人/机/料/法/环/测)".
+- Added the `method-theater.qcc.pptx` fixture (keywords complete, data logic broken) and the
+  self-test now asserts it is rejected.
+
 ## v5.0 - Standard QCC ten-step analysis chain
 
 - **Breaking**: compliance is no longer "method keywords appear in slide text".

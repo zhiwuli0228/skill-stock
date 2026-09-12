@@ -44,6 +44,7 @@ class SlideView:
     text: str
     tables: tuple[tuple[tuple[str, ...], ...], ...]
     has_chart: bool
+    title: str = ""
 
     @property
     def row_count(self) -> int:
@@ -83,9 +84,19 @@ def read_slides(pptx_path: Path) -> list[SlideView]:
         texts: list[str] = []
         tables: list[tuple[tuple[str, ...], ...]] = []
         has_chart = False
+        title = ""
+        title_size = -1.0
         for shape in slide.shapes:
             for node in _iter_shapes(shape):
-                texts.extend(_shape_text(node))
+                for value in _shape_text(node):
+                    # Chrome is not data: page-number badges and the sample-data footer
+                    # must not participate in numeric extraction.
+                    stripped = value.strip()
+                    if re.fullmatch(r"\d{1,2}", stripped):
+                        continue
+                    if "非真实业务结论" in value:
+                        continue
+                    texts.append(value)
                 if getattr(node, "has_table", False):
                     table = tuple(
                         tuple(cell.text.strip() for cell in row.cells)
@@ -94,12 +105,25 @@ def read_slides(pptx_path: Path) -> list[SlideView]:
                     tables.append(table)
                 if getattr(node, "has_chart", False):
                     has_chart = True
+                if getattr(node, "has_text_frame", False):
+                    value = node.text_frame.text.strip()
+                    sizes = [
+                        run.font.size.pt
+                        for paragraph in node.text_frame.paragraphs
+                        for run in paragraph.runs
+                        if run.font.size is not None
+                    ]
+                    size = max(sizes) if sizes else 0.0
+                    if value and size > title_size:
+                        title = value
+                        title_size = size
         slides.append(
             SlideView(
                 index=index,
                 text="\n".join(texts),
                 tables=tuple(tables),
                 has_chart=has_chart,
+                title=normalize(title),
             )
         )
     return slides
@@ -157,6 +181,11 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def title_text(slide: SlideView) -> str:
+    """Slide title (largest-font text) or full text when no title is detected."""
+    return slide.title or slide.text
+
+
 def has_word(text: str, *words: str) -> bool:
     return any(word and word in text for word in words)
 
@@ -180,6 +209,295 @@ def percent_count(text: str) -> int:
 
 def number_count(text: str) -> int:
     return len(re.findall(r"\d+(?:\.\d+)?", text))
+
+
+NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
+PERCENT_RE = re.compile(r"-?\d+(?:\.\d+)?\s*%")
+
+LOWER_IS_BETTER = (
+    "降低", "减少", "下降", "异常率", "不良率", "缺陷率", "故障率",
+    "返工率", "耗时", "时长", "等待", "投诉", "错误率",
+)
+HIGHER_IS_BETTER = (
+    "提高", "提升", "上升", "满意度", "合格率", "达成率",
+    "准确率", "覆盖率", "及时率", "成功率",
+)
+FREQ_HEADERS = ("频次", "次数", "数量", "例数", "件数", "发生次数")
+CUMULATIVE_HEADERS = ("累计", "累积")
+
+
+def numbers_in(text: str) -> list[float]:
+    return [float(value) for value in NUMBER_RE.findall(text)]
+
+
+def percents_in(text: str) -> list[float]:
+    return [float(value.rstrip("%")) for value in re.findall(r"-?\d+(?:\.\d+)?\s*%", text)]
+
+
+def labelled_percent(text: str, *labels: str) -> float | None:
+    for label in labels:
+        match = re.search(
+            re.escape(label) + r"[^0-9%]{0,4}(-?\d+(?:\.\d+)?)\s*%", text
+        )
+        if match:
+            return float(match.group(1))
+    return None
+
+
+def labelled_percent_last(text: str, label: str, window: int = 160) -> float | None:
+    """Last percentage within a window after the label (formulas state the result last)."""
+    match = re.search(re.escape(label) + r"[\s\S]{0,%d}" % window, text)
+    if not match:
+        return None
+    values = percents_in(match.group(0))
+    return values[-1] if values else None
+
+
+def target_value_percent(text: str) -> float | None:
+    """KPI style first ('目标值 13.3%'), then the formula result (last %)."""
+    direct = re.findall(r"目标值[^0-9%]{0,10}(\d+(?:\.\d+)?)\s*%", text)
+    if direct:
+        return float(direct[-1])
+    if "目标值" in text:
+        window = text[text.find("目标值"):][:200]
+        values = percents_in(window)
+        if values:
+            return values[-1]
+    return None
+
+
+def labelled_number(text: str, *labels: str) -> float | None:
+    for label in labels:
+        match = re.search(
+            re.escape(label) + r"[^0-9]{0,4}(\d+(?:\.\d+)?)", text
+        )
+        if match:
+            return float(match.group(1))
+    return None
+
+
+def detect_direction(text: str) -> str:
+    lower = sum(1 for word in LOWER_IS_BETTER if word in text)
+    higher = sum(1 for word in HIGHER_IS_BETTER if word in text)
+    return "lower" if lower >= higher else "higher"
+
+
+def column_series(table, headers: Sequence[str]) -> list[float]:
+    """Numeric column values for a header match, skipping 合计/总计 rows."""
+    if not table:
+        return []
+    header = [normalize(cell) for cell in table[0]]
+    for column, cell in enumerate(header):
+        if not any(word in cell for word in headers):
+            continue
+        values: list[float] = []
+        for row in table[1:]:
+            if column >= len(row):
+                continue
+            label = normalize(row[0]) if row else ""
+            if any(token in label for token in ("合计", "总计", "小计")):
+                continue
+            numbers = numbers_in(row[column])
+            if numbers:
+                values.append(numbers[0])
+        if len(values) >= 3:
+            return values
+    return []
+
+
+def frequency_series(bundle: "Bundle") -> list[float]:
+    for table in bundle.tables:
+        series = column_series(table, FREQ_HEADERS)
+        if series:
+            return series
+    return []
+
+
+def cumulative_series(bundle: "Bundle") -> list[float]:
+    for table in bundle.tables:
+        series = column_series(table, CUMULATIVE_HEADERS)
+        if series:
+            return series
+    if "累计" in bundle.text:
+        values = percents_in(bundle.text)
+        if len(values) >= 3:
+            return values
+    return []
+
+
+CN_DIGITS = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
+
+
+def declared_focus_count(text: str) -> int | None:
+    patterns = (
+        r"前\s*([0-9一二三四五六七八九十]+)\s*[类项个]",
+        r"(?:改善重点|关键少数)[^0-9一二三四五六七八九十]{0,30}?([0-9一二三四五六七八九十]+)\s*[类项个]",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        raw = match.group(1)
+        if raw.isdigit():
+            return int(raw)
+        value = CN_DIGITS.get(raw)
+        if value is not None:
+            return value
+    return None
+
+
+def pareto_counts_descending(bundle: "Bundle") -> bool:
+    series = frequency_series(bundle)
+    if len(series) < 3:
+        return True  # presence rules already flag missing data
+    return all(series[index] >= series[index + 1] for index in range(len(series) - 1))
+
+
+def pareto_counts_match_sample(bundle: "Bundle") -> bool:
+    series = frequency_series(bundle)
+    if len(series) < 3:
+        return True
+    sample = labelled_number(bundle.text, "样本量", "样本", "例数", "n=", "N=")
+    if sample is None:
+        return True
+    return abs(sum(series) - sample) <= max(1.0, sample * 0.01)
+
+
+def pareto_cumulative_valid(bundle: "Bundle") -> bool:
+    series = cumulative_series(bundle)
+    if len(series) < 3:
+        return True
+    monotonic = all(series[index] <= series[index + 1] + 0.05 for index in range(len(series) - 1))
+    return monotonic and abs(series[-1] - 100.0) <= 0.5
+
+
+def pareto_focus_covers_80(bundle: "Bundle") -> bool:
+    series = cumulative_series(bundle)
+    if len(series) < 3:
+        return True
+    count = declared_focus_count(bundle.text)
+    if count is None or count > len(series):
+        count = next((index + 1 for index, value in enumerate(series) if value >= 80), len(series))
+    return series[count - 1] >= 80.0 - 0.5
+
+
+def target_params(bundle: "Bundle") -> dict[str, float | str | None]:
+    text = bundle.text
+    return {
+        "current": labelled_percent(text, "现况值", "现状值"),
+        "focus": labelled_percent(text, "改善重点"),
+        "capability": labelled_percent(text, "圈能力"),
+        "target": target_value_percent(text),
+        "standard": labelled_percent(text, "标准值", "理论值", "基准值"),
+        "direction": detect_direction(text),
+    }
+
+
+def target_params_in_range(bundle: "Bundle") -> bool:
+    params = target_params(bundle)
+    values = [params[key] for key in ("current", "focus", "capability", "target")]
+    if any(value is None for value in values):
+        return True
+    return all(0.0 <= float(value) <= 100.0 for value in values)
+
+
+def target_direction_consistent(bundle: "Bundle") -> bool:
+    params = target_params(bundle)
+    if params["current"] is None or params["target"] is None:
+        return True
+    if params["direction"] == "lower":
+        return float(params["target"]) < float(params["current"])
+    return float(params["target"]) > float(params["current"])
+
+
+def target_formula_consistent(bundle: "Bundle") -> bool:
+    params = target_params(bundle)
+    if any(params[key] is None for key in ("current", "focus", "capability", "target")):
+        return True
+    current = float(params["current"])
+    focus = float(params["focus"]) / 100.0
+    capability = float(params["capability"]) / 100.0
+    target = float(params["target"])
+    standard = params["standard"]
+    candidates: list[float] = []
+    if params["direction"] == "lower":
+        candidates.append(current - current * focus * capability)
+        if standard is not None:
+            candidates.append(current - (current - float(standard)) * focus * capability)
+    else:
+        candidates.append(current + (100.0 - current) * focus * capability)
+        candidates.append(current + current * focus * capability)
+        if standard is not None:
+            candidates.append(current + (float(standard) - current) * focus * capability)
+    return any(abs(target - value) <= 0.5 for value in candidates)
+
+
+def true_cause_sample_sufficient(bundle: "Bundle") -> bool:
+    text = bundle.text
+    if any(token in text for token in ("抽样依据", "全量", "普查", "全样本")):
+        return True
+    samples: list[float] = []
+    for match in re.finditer(r"(?:样本量|样本|例数|例|条)\s*[:：]?\s*(\d+(?:\.\d+)?)", text):
+        samples.append(float(match.group(1)))
+    for match in re.finditer(r"(\d+(?:\.\d+)?)\s*(?:例|条|份)", text):
+        samples.append(float(match.group(1)))
+    return max(samples) >= 30 if samples else False
+
+
+def effect_values(bundle: "Bundle") -> dict[str, float | None]:
+    text = bundle.text
+    return {
+        "before": labelled_percent(text, "改善前", "活动前"),
+        "after": labelled_percent(text, "改善后", "活动后"),
+        "attainment": labelled_percent(text, "目标达成率", "达成率"),
+        "progress": labelled_percent(text, "进步率"),
+        "target": labelled_percent(text, "目标值"),
+        "direction": detect_direction(text),
+    }
+
+
+def effect_direction_improved(bundle: "Bundle") -> bool:
+    values = effect_values(bundle)
+    if values["before"] is None or values["after"] is None:
+        return True
+    if values["direction"] == "lower":
+        return float(values["after"]) < float(values["before"])
+    return float(values["after"]) > float(values["before"])
+
+
+def effect_attainment_consistent(bundle: "Bundle") -> bool:
+    values = effect_values(bundle)
+    if any(values[key] is None for key in ("before", "after", "attainment")):
+        return True
+    before = float(values["before"])
+    after = float(values["after"])
+    target = float(values["target"]) if values["target"] is not None else None
+    if target is None or abs(target - before) < 0.05:
+        return True
+    computed = (after - before) / (target - before) * 100.0
+    declared = float(values["attainment"])
+    return abs(computed - declared) <= 1.0 and declared > 0
+
+
+def effect_progress_consistent(bundle: "Bundle") -> bool:
+    values = effect_values(bundle)
+    if any(values[key] is None for key in ("before", "after", "progress")):
+        return True
+    before = float(values["before"])
+    after = float(values["after"])
+    if before == 0:
+        return True
+    computed = (before - after) / before * 100.0
+    declared = float(values["progress"])
+    return abs(computed - declared) <= 1.0
+
+
+def effect_post_evidence_present(bundle: "Bundle") -> bool:
+    text = bundle.text
+    post = has_word(text, "改善后", "活动后")
+    period = has_word(text, "期间", "日期", "月") or re.search(r"\d{4}[-/]\d{1,2}", text) is not None
+    sample = has_word(text, "样本") or re.search(r"\d+\s*例", text) is not None
+    return bool(post and period and sample)
 
 
 def placeholders_in(text: str) -> list[str]:
@@ -237,6 +555,10 @@ class Bundle:
     def has_chart(self) -> bool:
         return any(slide.has_chart for slide in self.slides)
 
+    @property
+    def tables(self) -> list[tuple[tuple[str, ...], ...]]:
+        return [table for slide in self.slides for table in slide.tables]
+
 
 def _table_with_rows(bundle: Bundle, minimum_rows: int) -> bool:
     return bundle.max_rows >= minimum_rows
@@ -246,7 +568,7 @@ THEME = Step(
     number=1,
     phase="主题选定",
     method="主题评价矩阵",
-    matcher=lambda slide: has_word(slide.text, "主题选定", "主题评价", "主题评审"),
+    matcher=lambda slide: has_word(title_text(slide), "主题选定", "主题评价", "主题评审"),
     rules=(
         Rule(
             "候选主题 ≥2",
@@ -265,7 +587,7 @@ ACTIVITY_PLAN = Step(
     number=2,
     phase="活动计划拟定",
     method="甘特图",
-    matcher=lambda slide: has_word(slide.text, "活动计划", "甘特图", "计划拟定"),
+    matcher=lambda slide: has_word(title_text(slide), "活动计划", "甘特图", "计划拟定"),
     rules=(
         Rule("阶段 ≥4", lambda b: count_distinct(b.text, PHASE_WORDS) >= 4),
         Rule(
@@ -282,9 +604,9 @@ CURRENT_STATE = Step(
     phase="现状把握",
     method="现状流程图 + 查检表 + 层别 + 柏拉图",
     matcher=lambda slide: has_word(
-        slide.text, "现状把握", "现状流程图", "查检表", "层别", "现状｜柏拉图"
+        title_text(slide), "现状把握", "现状流程图", "查检表", "层别", "现状｜柏拉图"
     )
-    or (has_word(slide.text, "柏拉图") and has_word(slide.text, "现状")),
+    or (has_word(title_text(slide), "柏拉图") and has_word(title_text(slide), "现状")),
     rules=(
         Rule(
             "现状流程图（步骤 ≥3，含起止）",
@@ -311,6 +633,10 @@ CURRENT_STATE = Step(
             "关键少数结论",
             lambda b: has_word(b.text, "改善重点", "关键少数", "关键少数项", "二八"),
         ),
+        Rule("柏拉图：频次按降序排列", pareto_counts_descending),
+        Rule("柏拉图：频次合计与样本量一致", pareto_counts_match_sample),
+        Rule("柏拉图：累计百分比单调且收敛到 100%", pareto_cumulative_valid),
+        Rule("柏拉图：80% 改善重点覆盖 ≥80%", pareto_focus_covers_80),
     ),
 )
 
@@ -318,7 +644,7 @@ TARGET = Step(
     number=4,
     phase="目标设定",
     method="目标值计算 + 目标柱状图",
-    matcher=lambda slide: has_word(slide.text, "目标设定"),
+    matcher=lambda slide: has_word(title_text(slide), "目标设定"),
     rules=(
         Rule("现况值", lambda b: has_word(b.text, "现况值", "现状值") and has_number(b.text)),
         Rule("改善重点", lambda b: has_word(b.text, "改善重点") and has_percent(b.text)),
@@ -333,6 +659,9 @@ TARGET = Step(
             lambda b: b.has_chart or has_word(b.text, "柱状", "对比图", "目标图"),
         ),
         Rule("合理性说明", lambda b: has_word(b.text, "合理性", "依据", "理由")),
+        Rule("参数取值 0–100%", target_params_in_range),
+        Rule("目标值方向与指标方向一致", target_direction_consistent),
+        Rule("目标值可由公式复算", target_formula_consistent),
     ),
 )
 
@@ -341,11 +670,11 @@ ANALYSIS = Step(
     phase="解析",
     method="鱼骨图 + 要因评价 + 真因验证",
     matcher=lambda slide: has_word(
-        slide.text, "解析", "鱼骨图", "特性要因图", "要因评价", "真因验证", "根因验证"
+        title_text(slide), "解析", "鱼骨图", "特性要因图", "要因评价", "真因验证", "根因验证"
     ),
     rules=(
         Rule(
-            "鱼骨图 4M1E ≥4 维",
+            "鱼骨图 5M1E/6M ≥4 维",
             lambda b: has_word(b.text, "鱼骨图", "特性要因图")
             and count_distinct(b.text, CAUSE_DIMENSIONS) >= 4,
         ),
@@ -365,6 +694,7 @@ ANALYSIS = Step(
             lambda b: has_word(b.text, "结果", "验证结果")
             and has_word(b.text, "结论", "真因", "成立", "不成立"),
         ),
+        Rule("真因验证样本量 ≥30 或说明抽样依据", true_cause_sample_sufficient),
     ),
 )
 
@@ -372,7 +702,7 @@ COUNTERMEASURE = Step(
     number=6,
     phase="对策拟定",
     method="对策评价矩阵 + 5W1H + 真因映射",
-    matcher=lambda slide: has_word(slide.text, "对策拟定", "对策评价", "5W1H", "5W2H"),
+    matcher=lambda slide: has_word(title_text(slide), "对策拟定", "对策评价", "5W1H", "5W2H"),
     rules=(
         Rule("对策 ≥3", lambda b: _table_with_rows(b, 4) or number_count(b.text) >= 3),
         Rule(
@@ -392,7 +722,7 @@ IMPLEMENTATION = Step(
     number=7,
     phase="对策实施与检讨",
     method="PDCA 实施跟踪",
-    matcher=lambda slide: has_word(slide.text, "对策实施", "实施跟踪", "实施与检讨"),
+    matcher=lambda slide: has_word(title_text(slide), "对策实施", "实施跟踪", "实施与检讨"),
     rules=(
         Rule("阶段 / PDCA", lambda b: count_distinct(b.text, PHASE_WORDS) >= 2 or has_word(b.text, "阶段")),
         Rule("时间 / 责任人", lambda b: has_word(b.text, "时间", "日期") and has_word(b.text, "责任人", "负责人")),
@@ -406,7 +736,7 @@ EFFECT = Step(
     number=8,
     phase="效果确认",
     method="有形成果 + 无形成果",
-    matcher=lambda slide: has_word(slide.text, "效果确认", "有形成果", "无形成果"),
+    matcher=lambda slide: has_word(title_text(slide), "效果确认", "有形成果", "无形成果"),
     rules=(
         Rule("改善前值", lambda b: has_word(b.text, "改善前", "活动前", "改善前值") and has_number(b.text)),
         Rule("改善后值", lambda b: has_word(b.text, "改善后", "活动后", "改善后值") and has_number(b.text)),
@@ -417,6 +747,10 @@ EFFECT = Step(
             "无形成果（雷达图/能力评分）",
             lambda b: has_word(b.text, "雷达图", "无形成果", "能力评分", "成长"),
         ),
+        Rule("改善后优于改善前（方向一致）", effect_direction_improved),
+        Rule("目标达成率可由公式复算", effect_attainment_consistent),
+        Rule("进步率可由公式复算", effect_progress_consistent),
+        Rule("改善后期间与样本量", effect_post_evidence_present),
     ),
 )
 
@@ -424,7 +758,7 @@ STANDARDIZATION = Step(
     number=9,
     phase="标准化",
     method="标准化文件 + 日常稽核",
-    matcher=lambda slide: has_word(slide.text, "标准化"),
+    matcher=lambda slide: has_word(title_text(slide), "标准化"),
     rules=(
         Rule(
             "标准化文件名称与类型",
@@ -445,7 +779,7 @@ REVIEW = Step(
     number=10,
     phase="检讨与改进",
     method="活动检讨 + 下期主题",
-    matcher=lambda slide: has_word(slide.text, "检讨与改进", "活动检讨", "检讨"),
+    matcher=lambda slide: has_word(title_text(slide), "检讨与改进", "活动检讨", "检讨"),
     rules=(
         Rule("优点", lambda b: has_word(b.text, "优点", "做得好的", "成效")),
         Rule("不足", lambda b: has_word(b.text, "不足", "待改进", "缺点", "问题点")),

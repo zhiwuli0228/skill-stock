@@ -110,7 +110,7 @@ def build_data_complete(path: Path) -> None:
             "判定标准：结果校验不通过即判定为异常。",
             "收集期间：2026-01-01 至 2026-01-31。",
             "样本量：300 例。",
-            "类别与频次：校验异常 126，记录缺失 58，流程等待 42，标注错误 30，其他 44。",
+            "类别与频次：校验异常 126，记录缺失 70，流程等待 60，标注错误 30，其他 14。",
         ],
     )
 
@@ -120,9 +120,10 @@ def build_data_complete(path: Path) -> None:
         ["问题类别", "频次", "占比", "累计占比"],
         [
             ["校验异常", "126", "42.0%", "42.0%"],
-            ["记录缺失", "58", "19.3%", "61.3%"],
-            ["流程等待", "42", "14.0%", "75.3%"],
-            ["标注错误", "30", "10.0%", "85.3%"],
+            ["记录缺失", "70", "23.3%", "65.3%"],
+            ["流程等待", "60", "20.0%", "85.3%"],
+            ["标注错误", "30", "10.0%", "95.3%"],
+            ["其他", "14", "4.7%", "100.0%"],
         ],
         ["层别分析：按班别分层，A 班异常率 46%，B 班 38%。"],
     )
@@ -131,8 +132,8 @@ def build_data_complete(path: Path) -> None:
         prs,
         "现状把握｜柏拉图：识别关键 80% 改进项",
         [
-            "问题类别按频次降序排列：校验异常 126、记录缺失 58、流程等待 42、标注错误 30、其他 44。",
-            "累计百分比：42.0% / 61.3% / 75.3% / 85.3% / 100.0%。",
+            "问题类别按频次降序排列：校验异常 126、记录缺失 70、流程等待 60、标注错误 30、其他 14。",
+            "累计百分比：42.0% / 65.3% / 85.3% / 95.3% / 100.0%。",
             "80%（85.3%）改善重点：校验异常、记录缺失、流程等待三类，属关键少数问题。",
         ],
     )
@@ -217,7 +218,8 @@ def build_data_complete(path: Path) -> None:
         "效果确认｜有形成果",
         [
             "改善前：42.0%；改善后：13.6%；目标值：13.3%。",
-            "目标达成率：102.2%；进步率：67.6%。",
+            "目标达成率：99.0%；进步率：67.6%。",
+            "改善后收集期间：2026-03-01 ~ 03-31；样本量：300 例。",
             "改善前后对比图（柏拉图）：异常率显著下降。",
         ],
     )
@@ -283,13 +285,55 @@ def build_keyword_only(path: Path) -> None:
     prs.save(str(path))
 
 
+METHOD_THEATER_REPLACEMENTS = (
+    # Pareto data: non-monotonic counts and an inconsistent improvement focus
+    ("126", "26"),
+    ("记录缺失 70", "记录缺失 170"),
+    ("校验异常、记录缺失、流程等待三类", "校验异常、记录缺失二类"),
+    # True-cause verification with trivial evidence
+    ("关联异常 98 例（77.8%）", "关联异常 3 例（2.4%）"),
+    ("查检表 300 例 + 现场记录", "查检表 3 例 + 口头说明"),
+    # Target value contradicts the stated formula
+    ("= 13.3%。", "= 60.0%。"),
+    ("目标值：13.3%", "目标值：60.0%"),
+    # Effect confirmation is worse than baseline with impossible rates
+    ("改善前：42.0%；改善后：13.6%", "改善前：13.6%；改善后：42.0%"),
+    ("目标达成率：99.0%", "目标达成率：150.0%"),
+    ("进步率：67.6%", "进步率：-208.8%"),
+)
+
+
+def build_method_theater(path: Path, source: Path) -> None:
+    """Corrupt analytical logic while keeping every method keyword."""
+    prs = Presentation(str(source))
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            frames = []
+            if getattr(shape, "has_text_frame", False):
+                frames.append(shape.text_frame)
+            if getattr(shape, "has_table", False):
+                for row in shape.table.rows:
+                    for cell in row.cells:
+                        frames.append(cell.text_frame)
+            for frame in frames:
+                for paragraph in frame.paragraphs:
+                    for run in paragraph.runs:
+                        text = run.text
+                        for old, new in METHOD_THEATER_REPLACEMENTS:
+                            text = text.replace(old, new)
+                        run.text = text
+    prs.save(str(path))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate QCC compliance fixtures.")
     parser.add_argument("--outdir", type=Path, default=Path("examples/fixtures"))
     args = parser.parse_args()
     args.outdir.mkdir(parents=True, exist_ok=True)
     build_keyword_only(args.outdir / "keyword-only.qcc.pptx")
-    build_data_complete(args.outdir / "data-complete.qcc.pptx")
+    complete = args.outdir / "data-complete.qcc.pptx"
+    build_data_complete(complete)
+    build_method_theater(args.outdir / "method-theater.qcc.pptx", complete)
     print(f"fixtures written to {args.outdir}")
     return 0
 

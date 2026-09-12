@@ -1,8 +1,8 @@
 # QCC Method Compliance Report (v5.0)
 
-- PPTX: `examples\fixtures\keyword-only.qcc.pptx`
+- PPTX: `C:\Users\18811\Documents\Codex\2026-09-10\xian-z\work\skill-stock\skills\qcc-ppt-method-compliant-producer\examples\fixtures\keyword-only.qcc.pptx`
 - Slides: 10
-- Checked at: 2026-09-11T15:26:52+00:00
+- Checked at: 2026-09-12T12:58:29+00:00
 - Overall: **NON-COMPLIANT**
 
 ## Step results
@@ -13,10 +13,10 @@
 | 2 | 活动计划拟定 | 甘特图 | WEAK | 3 | 阶段 ≥4; 时间轴（周次/日期）; 负责人 |
 | 3 | 现状把握 | 现状流程图 + 查检表 + 层别 + 柏拉图 | INCOMPLETE | 4 | 现状流程图（步骤 ≥3，含起止）; 查检表判定标准 / 收集期间 / 样本量; 数据汇总（类别 ≥3 且含频次）; 层别分析维度; 关键少数结论 |
 | 4 | 目标设定 | 目标值计算 + 目标柱状图 | INCOMPLETE | 5 | 现况值; 改善重点; 圈能力; 目标值; 计算关系; 目标柱状图 / 对比图; 合理性说明 |
-| 5 | 解析 | 鱼骨图 + 要因评价 + 真因验证 | INCOMPLETE | 6 | 鱼骨图 4M1E ≥4 维; 要因评价（评分/排序） |
+| 5 | 解析 | 鱼骨图 + 要因评价 + 真因验证 | INCOMPLETE | 6 | 鱼骨图 5M1E/6M ≥4 维; 要因评价（评分/排序）; 真因验证样本量 ≥30 或说明抽样依据 |
 | 6 | 对策拟定 | 对策评价矩阵 + 5W1H + 真因映射 | WEAK | 7 | 对策 ≥3; 对策评价维度 ≥3; 5W1H 六要素; 对策↔已验证真因映射 |
 | 7 | 对策实施与检讨 | PDCA 实施跟踪 | MISSING | - | 阶段 / PDCA; 时间 / 责任人; 进展记录; 过程数据跟踪; 困难与调整 |
-| 8 | 效果确认 | 有形成果 + 无形成果 | INCOMPLETE | 8 | 改善前值; 改善后值; 目标达成率; 进步率; 改善前后对比图; 无形成果（雷达图/能力评分） |
+| 8 | 效果确认 | 有形成果 + 无形成果 | INCOMPLETE | 8 | 改善前值; 改善后值; 目标达成率; 进步率; 改善前后对比图; 无形成果（雷达图/能力评分）; 改善后期间与样本量 |
 | 9 | 标准化 | 标准化文件 + 日常稽核 | INCOMPLETE | 9 | 标准化文件名称与类型; 稽核人 / 频率 / 方式; 教育训练与推广 |
 | 10 | 检讨与改进 | 活动检讨 + 下期主题 | INCOMPLETE | 10 | 残余问题; 下期主题 |
 
@@ -74,8 +74,9 @@ Evidence:
 ### 5. 解析 — INCOMPLETE
 
 Missing evidence:
-- 鱼骨图 4M1E ≥4 维
+- 鱼骨图 5M1E/6M ≥4 维
 - 要因评价（评分/排序）
+- 真因验证样本量 ≥30 或说明抽样依据
 
 Evidence:
 - [Slide 6] 解析｜真因验证 待验证：数据来源与验证结果。
@@ -110,6 +111,7 @@ Missing evidence:
 - 进步率
 - 改善前后对比图
 - 无形成果（雷达图/能力评分）
+- 改善后期间与样本量
 
 Evidence:
 - [Slide 8] 效果确认｜有形成果 待补充：改善前后数据。
