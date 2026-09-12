@@ -951,6 +951,8 @@ CROSS_STEP = Step(
     rules=(Rule("对策↔已验证真因逐条映射", lambda bundle: True),),
 )
 
+ALL_STEPS: tuple[Step, ...] = STEPS + (CROSS_STEP,)
+
 
 def cross_check_result(slides: Sequence[SlideView]) -> StepResult:
     causes = verified_causes(slides)
