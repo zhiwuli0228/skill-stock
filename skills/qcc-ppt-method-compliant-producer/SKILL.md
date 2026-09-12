@@ -1,14 +1,15 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.0"
+version: "5.5"
 license: MIT
 ---
 
 # QCC PPT Method-Compliant Producer
 
 > v5.0 重做方法链：从「方法名词在场」升级为「标准品管圈十步法的分析链成立」。
-> 合规检查脚本同步升级为结构化/逻辑校验，缺数据一律判 `INCOMPLETE`。
+> v5.1 补上逻辑门：数据一致性、公式复算、指标方向、真因样本量、改善前后可比性；
+> 缺数据判 `INCOMPLETE`，逻辑错误判 `WEAK`，不再放行「术语齐全但算法错误」的稿子。
 
 ## 1. Role
 
@@ -29,7 +30,7 @@ A deck that shows method names but has no data, no analysis logic, or no conclus
 2  活动计划拟定 甘特图 + PDCA 阶段 + 负责人
 3  现状把握     现状流程图 + 查检表（判定标准/期间/样本量）+ 数据汇总 + 层别分析 + 柏拉图（累计% / 80% 改善重点）
 4  目标设定     现况值 -（现况值 × 改善重点 × 圈能力）= 目标值 + 目标柱状图 + 合理性说明
-5  解析         特性要因图（4M1E）→ 要因评价 → 真因验证（数据验证，未通过回退）
+5  解析         特性要因图（5M1E / 6M）→ 要因评价 → 真因验证（数据验证，未通过回退）
 6  对策拟定     对策评价矩阵 + 对策群组/系统图 + 5W1H + 对策↔真因映射
 7  对策实施与检讨 PDCA 实施记录 + 过程数据跟踪 + 困难与调整
 8  效果确认     有形成果（改善前后 / 目标达成率 / 进步率）+ 无形成果（雷达图）
@@ -67,6 +68,7 @@ missing or weak steps. Visual polishing alone is not acceptable.
 ## 4. Required Inputs
 
 ```text
+qcc-workspace/input/qcc-data.yaml            # structured ten-step data (preferred)
 qcc-workspace/input/qcc-baseline.pptx        # optional (enhancement mode)
 qcc-workspace/input/render/montage.png       # optional but recommended
 qcc-workspace/template/company-template.pptx # optional
@@ -92,7 +94,7 @@ Prefer a user-provided template; otherwise use `templates/qcc-empty-template.ppt
 | 2 | 活动计划 | 甘特图 | phases ≥4, timeline, owners |
 | 3 | 现状把握 | 流程图 + 查检表 + 层别 + 柏拉图 | as-is steps ≥3, criteria/period/sample, categories ≥3 with counts, stratification, cumulative %, 80% vital-few |
 | 4 | 目标设定 | 参数 + 目标柱状图 | current, improvement focus %, circle capability %, target, calculation |
-| 5 | 解析 | 鱼骨图 + 要因评价 + 真因验证 | 4M1E ≥4 branches, cause scoring, validation data source + result |
+| 5 | 解析 | 鱼骨图 + 要因评价 + 真因验证 | 5M1E/6M ≥4 branches, cause scoring, validation data source + result |
 | 6 | 对策拟定 | 对策评价矩阵 + 5W1H | measures ≥3, criteria ≥3, scores, 5W1H, measure↔verified cause |
 | 7 | 实施与检讨 | PDCA 实施跟踪 | phase/time/owner/progress, tracking data, difficulties |
 | 8 | 效果确认 | 有形成果 + 无形成果 | before/after, target attainment %, progress rate, radar chart |
@@ -159,7 +161,82 @@ qcc-workspace/reports/qcc-method-compliance-report.md
 qcc-workspace/reports/qcc-format-audit-report.md
 ```
 
-## 6. Hard Rules
+## 6. Logic gates (v5.1)
+
+The checker now recomputes the analysis instead of only looking for keywords:
+
+1. **Pareto (现状把握)** — categories sorted descending; counts sum = sample size;
+   cumulative percentages monotonic and converging to 100%; the 80% improvement focus
+   covers ≥80%.
+2. **Target (目标设定)** — parameters within 0–100%; target direction matches the metric
+   direction (lower-is-better ⇒ target < current); the target value can be recomputed from
+   the stated formula (tolerance 0.5 percentage points).
+3. **True-cause verification (解析)** — sample size ≥30, or an explicit sampling basis
+   (全量/普查/抽样依据).
+4. **Effect confirmation (效果确认)** — after must beat before; attainment and progress
+   rates are recomputed from the before/after/target values; the post-improvement period and
+   sample size are required.
+
+Page-number badges and the sample-data footer are excluded from numeric extraction.
+
+### 6.1 Extended gates (v5.2)
+
+5. **主题选定** — 评价规则可查：权重 / 评分标准 / 评分方式。
+6. **活动计划** — 必须有「计划 vs 实际」进度对照（完成率 / 偏差 / 延期）。
+7. **查检表** — 必须写明收集方法与责任人（记录方式 / 数据来源 + 责任人）。
+8. **无形成果** — 必须给出评价量表（分制/评分范围）、维度与前后均值。
+9. **标准化** — 文件必须有编号、版本、生效日期，并写明稽核结果回写 / 效果维持。
+10. **跨步骤一致性（第 11 项）** — 每条采纳对策必须映射到一条已验证真因；
+    映射缺失或对不上判 `WEAK`。
+
+### 6.2 Analysis-quality gates (v5.3)
+
+11. **数据与手法选择说明** — 现状把握必须写明数据类型（计数值/计量值）与选用该手法的理由
+    （见 `docs/qcc_methodology.md` 工具选择矩阵）。
+12. **统计检验或豁免说明** — 效果确认须给出检验方法与 p 值/置信区间；
+    声称“显著”必须给出 p 值；不做检验须说明理由（全量/描述性/样本不足）。
+13. **效益核算** — 有形成果须给出投入（人时/费用）、收益（节省工时/费用）与回收期/ROI。
+
+### 6.3 Raw-data statistics recomputation (v5.4)
+
+14. **统计数据复算（第 12 项）** — 当提供原始数据文件时，脚本用自带的
+    χ²（2×2，Yates 校正）或 Welch t 检验复算 p 值，并与文稿声明的 p 值比对；
+    不一致判 `WEAK`。
+
+数据文件约定（`qcc-workspace/input/qcc-data.yaml`，也接受 JSON）：
+
+```yaml
+metric: 处理异常率
+direction: lower          # lower | higher
+before: {period: 2026-01-01..2026-01-31, defects: 126, total: 300}
+after:  {period: 2026-03-01..2026-03-31, defects: 41,  total: 300}
+claimed: {test: chi-square, comparison: "<", p: 0.05}
+```
+
+连续型数据用 `before/after: {n, mean, sd}`。命令：
+
+```bash
+python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml
+python scripts/check_qcc_method_compliance.py deck.pptx --data qcc-workspace/input/qcc-data.yaml
+```
+
+### 6.4 Data intake (v5.5)
+
+Users provide data with the lowest possible effort; the skill normalises it into one
+`qcc-data.yaml` and validates it before production:
+
+```bash
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml           # blank template
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml --sample  # filled example
+python scripts/validate_qcc_data.py --data qcc-workspace/input/qcc-data.yaml      # lists missing fields
+python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml  # recompute p-value
+```
+
+Intake rules, CSV column conventions and the per-step field checklist live in
+`docs/qcc_data_intake.md`. Generated decks must be checked with `--data` so the
+statistics step is recomputed from the same source the user supplied.
+
+## 7. Hard Rules
 
 - Do not deliver a deck whose method pages contain only method names and no data/evidence.
 - Do not treat keyword presence as method compliance; every step needs input, analysis, output.
@@ -179,7 +256,7 @@ qcc-workspace/reports/qcc-format-audit-report.md
   template layout using its palette and typography; otherwise the deck renders as a squeezed,
   unreadable mess even though the background is preserved.
 
-## 7. Recommended Commands
+## 8. Recommended Commands
 
 Enhancement mode:
 

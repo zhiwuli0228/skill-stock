@@ -1,5 +1,61 @@
 # Changelog
 
+## v5.5 - Data intake workflow
+
+- 新增 `docs/qcc_data_intake.md`：三种数据提供方式（YAML / CSV 表格 / 现有材料）、
+  四步标准流程、按十步法的必备字段清单、CSV 列名约定与五条数据质量红线。
+- 新增 `scripts/init_qcc_data.py`：生成空白填写模板或带示例的样例数据。
+- 新增 `scripts/validate_qcc_data.py`：逐步骤检查数据完整性并输出待补清单，
+  同时做派生校验（频次合计、目标公式、改善方向、统计量）。
+- 新增 `scripts/selftest_qcc_data.py`：空白模板必须报缺、样例必须就绪、统计可复算。
+- `workspace-template/input/qcc-data.example.yaml` 作为随包示例。
+
+## v5.4 - Raw-data statistics recomputation
+
+- 新增 `scripts/qcc_statistics.py`：自带 χ²（2×2，Yates 校正）与 Welch t 检验，
+  不依赖 scipy（自实现不完全 gamma / 不完全 beta 函数）。
+- 新增 `scripts/verify_qcc_statistics.py`：从原始数据文件复算 p 值并生成报告，
+  可校验文稿声明的 p 值是否与复算一致。
+- 检查脚本新增 `--data`：提供原始数据时追加第 12 项「统计数据复算」，
+  文稿 p 值与复算不一致判 `WEAK`。
+- 新增 `scripts/selftest_qcc_statistics.py` 覆盖：显著性/非显著性/连续型数据/声明不一致。
+
+## v5.3 - Tool-selection, statistics and cost-benefit gates
+
+- 现状把握：新增「数据与手法选择说明」——须写明数据类型（计数值/计量值）与
+  选用查检表/柏拉图/直方图/散布图/管制图等工具的理由（依据 `docs/qcc_methodology.md` 工具选择矩阵）。
+- 效果确认：新增「统计检验或豁免说明」——给出检验方法与 p 值/置信区间；
+  声称“显著”必须给出 p 值；不做检验须说明理由（全量数据/描述性对比/样本不足）。
+- 效果确认：新增「效益核算」——投入（人时/费用）、收益（节省工时/费用）、回收期或 ROI。
+- 方法学文档新增「工具选择矩阵」与「统计检验与成本效益」两节。
+
+## v5.2 - Extended method gates
+
+- 主题选定：要求评价规则（权重/评分标准/评分方式）。
+- 活动计划：要求「计划 vs 实际」进度对照（完成率/偏差/延期）。
+- 查检表：要求收集方法与责任人。
+- 无形成果：要求评价量表（分制/评分范围）、维度与前后均值。
+- 标准化：要求文件编号、版本、生效日期，以及稽核结果回写/效果维持。
+- 新增第 11 项「跨步骤一致性」：每条采纳对策必须映射到一条已验证真因
+  （从真因验证表提取结论为“成立”的要因，再与对策表的真因列逐条比对）。
+
+## v5.1 - Method logic gates
+
+- Added numeric/logic verification instead of keyword presence only:
+  - Pareto: descending categories, counts sum = sample size, cumulative monotonic to 100%,
+    and the 80% improvement focus covering >=80%;
+  - target: parameter range, direction consistency, and formula recomputation (tolerance 0.5pt);
+  - true-cause verification: sample size >=30 or an explicit sampling basis;
+  - effect confirmation: after must beat before, attainment/progress recomputation, and a
+    post-improvement period + sample size.
+- Step matching now uses the slide title (largest-font text), so roadmap/plan pages no longer
+  bleed into other steps' evidence bundles.
+- Page-number badges and the sample-data footer are excluded from numeric extraction.
+- Terminology fix: fishbone dimensions are 5M1E (Man/Machine/Material/Method/Measurement) or
+  6M when Environment is added — not "4M1E (人/机/料/法/环/测)".
+- Added the `method-theater.qcc.pptx` fixture (keywords complete, data logic broken) and the
+  self-test now asserts it is rejected.
+
 ## v5.0 - Standard QCC ten-step analysis chain
 
 - **Breaking**: compliance is no longer "method keywords appear in slide text".

@@ -14,7 +14,7 @@ structural check of the standard ten-step chain:
 2  活动计划     甘特图 + PDCA + 负责人
 3  现状把握     现状流程图 + 查检表 + 数据汇总 + 层别 + 柏拉图（累计% / 80% 改善重点）
 4  目标设定     现况值 -（现况值 × 改善重点 × 圈能力）= 目标值 + 目标柱状图
-5  解析         鱼骨图（4M1E）→ 要因评价 → 真因验证（数据验证，未通过回退）
+5  解析         鱼骨图（5M1E/6M）→ 要因评价 → 真因验证（数据验证，未通过回退）
 6  对策拟定     对策评价矩阵 + 5W1H + 对策↔已验证真因
 7  对策实施      PDCA 实施跟踪 + 过程数据 + 困难与调整
 8  效果确认     有形成果（改善前后/目标达成率/进步率）+ 无形成果（雷达图）
@@ -54,6 +54,19 @@ python scripts/audit_qcc_visual_heuristics.py qcc-workspace/output/qcc-review-re
 
 Then render to PNG and inspect the montage. User-provided screenshots are authoritative
 over object-level audits (`docs/qcc_screenshot_feedback_gate.md`).
+
+## Data intake (v5.5)
+
+```bash
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml           # blank template
+python scripts/init_qcc_data.py --out qcc-workspace/input/qcc-data.yaml --sample  # filled example
+python scripts/validate_qcc_data.py --data qcc-workspace/input/qcc-data.yaml      # missing-field checklist
+python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml  # recompute p-value
+python scripts/check_qcc_method_compliance.py deck.pptx --data qcc-workspace/input/qcc-data.yaml
+```
+
+See `docs/qcc_data_intake.md` for the per-step field checklist, CSV column conventions
+and the data-quality rules.
 
 ## Fixture self-check
 

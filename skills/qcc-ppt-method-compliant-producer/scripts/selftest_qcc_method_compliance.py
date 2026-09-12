@@ -41,6 +41,11 @@ def main() -> int:
         args.fixtures / "keyword-only.qcc.pptx",
         reports / "keyword-only.report.md",
     )
+    theater = run_checker(
+        checker,
+        args.fixtures / "method-theater.qcc.pptx",
+        reports / "method-theater.report.md",
+    )
     positive = run_checker(
         checker,
         args.fixtures / "data-complete.qcc.pptx",
@@ -50,6 +55,8 @@ def main() -> int:
     failures: list[str] = []
     if negative == 0:
         failures.append("keyword-only fixture unexpectedly PASSED")
+    if theater == 0:
+        failures.append("method-theater fixture unexpectedly PASSED")
     if positive != 0:
         failures.append("data-complete fixture unexpectedly FAILED")
 
@@ -58,7 +65,10 @@ def main() -> int:
         for failure in failures:
             print(f"- {failure}")
         return 1
-    print("SELFTEST PASSED: keyword-only is NON-COMPLIANT, data-complete is PASS.")
+    print(
+        "SELFTEST PASSED: keyword-only and method-theater are NON-COMPLIANT, "
+        "data-complete is PASS."
+    )
     return 0
 
 

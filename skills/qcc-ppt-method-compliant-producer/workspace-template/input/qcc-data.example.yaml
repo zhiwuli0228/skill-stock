@@ -1,0 +1,91 @@
+# QCC 数据文件（示例：降低处理异常率）
+meta:
+  topic: 降低处理异常率
+  team: 精益圈
+  lead: 张三
+  period: 2026-01-01..2026-03-31
+  direction: lower
+
+theme:
+  candidates: [降低处理异常率, 缩短处理时长, 减少返工次数]
+  criteria: [上级政策, 重要性, 迫切性, 可行性, 圈能力]
+  scores:
+    - [5, 5, 4, 5, 4]
+    - [4, 4, 3, 4, 4]
+    - [3, 4, 3, 3, 3]
+  decision_rule: 5 分制，圈员独立打分取平均，权重相同
+  selected: 降低处理异常率
+
+plan:
+  phases: [P 计划, D 实施, C 检查, A 处理]
+  weeks: 8
+  owners: [张三, 李四, 王五]
+  progress: {planned: 8, actual: 8, note: 第 5 周延期 2 天，已调整顺序}
+
+current_state:
+  data_type: 计数值
+  tools: [查检表, 柏拉图, 层别]
+  check_sheet:
+    criteria: 结果校验不通过即判定为异常
+    period: 2026-01-01..2026-01-31
+    sample: 300
+    method: 查检表逐例记录
+    owner: 张三
+  categories:
+    - {name: 校验异常, count: 126}
+    - {name: 记录缺失, count: 70}
+    - {name: 流程等待, count: 60}
+    - {name: 标注错误, count: 30}
+    - {name: 其他, count: 14}
+  strata:
+    - {name: A 班, value: 46.0}
+    - {name: B 班, value: 38.0}
+    - {name: C 班, value: 41.0}
+  pareto_focus: {count: 3, cumulative: 85.3}
+
+target: {current: 42.0, focus: 85.3, capability: 80, formula: 目标值 = 现况值 - (现况值 × 改善重点 × 圈能力), value: 13.3}
+
+analysis:
+  fishbone:
+    problem: 结果校验异常率高
+    dimensions:
+      人: [新人操作不熟练]
+      机: [校验工具版本旧]
+      料: [字段定义不统一]
+      法: [校验规则缺失]
+      测: [抽样标准不明确]
+  cause_scores:
+    - {cause: 校验规则缺失, score: 14, selected: true}
+    - {cause: 字段定义不统一, score: 12, selected: true}
+    - {cause: 抽样标准不明确, score: 9, selected: false}
+  verification:
+    - {cause: 校验规则缺失, source: 查检表 300 例 + 现场记录, method: 按规则缺失分类统计, result: 关联异常 98 例（77.8%）, conclusion: 成立}
+    - {cause: 字段定义不统一, source: 查检表 300 例 + 字段字典, method: 对比字段口径差异, result: 关联异常 36 例（28.6%）, conclusion: 成立}
+    - {cause: 抽样标准不明确, source: 抽检记录 60 例, method: 重抽对比判定差异, result: 差异 < 5%，不显著, conclusion: 不成立}
+
+countermeasures:
+  - {measure: 补齐校验规则, cause: 校验规则缺失, scores: {可行性: 5, 效益性: 5, 圈能力: 5}, total: 19, adopted: true, who: 李四, where: 结果校验环节, when: 第 4 周, how: 新增 12 条规则并回归验证}
+  - {measure: 统一字段定义, cause: 字段定义不统一, scores: {可行性: 5, 效益性: 4, 圈能力: 4}, total: 18, adopted: true, who: 王五, where: 数据录入环节, when: 第 4 周, how: 发布字段字典并培训}
+  - {measure: 优化校验工具, cause: 校验规则缺失, scores: {可行性: 4, 效益性: 4, 圈能力: 4}, total: 15, adopted: true, who: 李四, where: 工具链, when: 第 5 周, how: 升级工具版本并配置规则}
+
+implementation:
+  - {stage: D, time: 第 4 周, owner: 李四, progress: 完成 12 条校验规则上线, data: 异常率 42.0% → 18.0%, difficulty: 工具兼容性延期 2 天，已调整顺序}
+  - {stage: C, time: 第 6-7 周, owner: 张三, progress: 效果确认与目标对比, data: 异常率降至 13.6%, difficulty: 抽样复核发现 2 例边界问题，已修订}
+
+effect:
+  before: {period: 2026-01-01..2026-01-31, defects: 126, total: 300}
+  after: {period: 2026-03-01..2026-03-31, defects: 41, total: 300}
+  target: 13.3
+  statistics: {test: chi-square, p: 0.05, comparison: "<"}
+  intangible: {scale: 1-5 分制, dimensions: [问题意识, 数据分析, 团队协作, 表达沟通, 工具应用], before_mean: 3.0, after_mean: 4.2}
+  benefit: {input_hours: 24, input_cost: 0.4, annual_saving_hours: 312, annual_saving: 5.2, payback: 1 个月内}
+
+standardization:
+  documents:
+    - {name: 结果校验作业标准书, type: 作业标准书, number: QCC-STD-001, version: V1.0, effective: 2026-04-01, owner: 张三, audit_frequency: 每月, audit_method: 按检查表逐项稽核, training: 新员工入职培训, maintenance: 连续 3 个月复查达标}
+
+review:
+  strengths: [数据驱动定位改善重点, 对策与真因一一对应]
+  weaknesses: [工具兼容性评估不足, 培训与生产高峰冲突]
+  residual: [抽样标准仍未统一]
+  next_topic: 降低记录缺失率
