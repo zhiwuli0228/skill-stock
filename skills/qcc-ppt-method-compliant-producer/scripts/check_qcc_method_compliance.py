@@ -777,6 +777,46 @@ def _table_with_rows(bundle: Bundle, minimum_rows: int) -> bool:
     return bundle.max_rows >= minimum_rows
 
 
+MATRIX_CAUSE_CRITERIA = ("影响度", "发生频次", "可控性", "重要度", "紧急度")
+SOFT_SKILL_WORDS = (
+    "问题意识", "数据分析", "团队协作", "表达沟通", "工具应用", "品管手法",
+    "责任心", "沟通协调", "积极性", "创新", "团队精神", "电脑应用", "学习能力",
+)
+
+
+def matrix_dimension_columns(
+    bundle: "Bundle", criteria: Sequence[str], minimum: int = 3
+) -> bool:
+    """A scoring matrix must expose every evaluation dimension as its own column.
+
+    A cell that says "5 / 5 / 4 / 5" hides the dimensions; a matrix that cannot be
+    read dimension by dimension is not a QCC 评价矩阵. Either orientation counts:
+    dimensions as columns, or dimensions as rows with candidates across the top.
+    """
+    for table in bundle.tables:
+        if not table:
+            continue
+        header = " ".join(normalize(cell) for cell in table[0])
+        first_column = " ".join(normalize(row[0]) for row in table[1:] if row)
+        if (
+            count_distinct(header, criteria) >= minimum
+            or count_distinct(first_column, criteria) >= minimum
+        ):
+            return True
+    return False
+
+
+def implementation_records_per_countermeasure(bundle: "Bundle") -> bool:
+    """实施记录 must list the countermeasures (one row per measure), not only phases."""
+    for table in bundle.tables:
+        if not table:
+            continue
+        header = [normalize(cell) for cell in table[0]]
+        if any("对策" in cell or "措施" in cell or "What" in cell for cell in header):
+            return True
+    return False
+
+
 THEME = Step(
     number=1,
     phase="主题选定",
@@ -794,6 +834,10 @@ THEME = Step(
         Rule("评分数字", lambda b: has_number(b.text)),
         Rule("排序或选定结论", lambda b: has_word(b.text, "排序", "总分", "选定", "采纳", "得分")),
         Rule("主题评价规则（权重/评分标准）", theme_rule_documented),
+        Rule(
+            "评价矩阵逐维度可见（维度成列或成行）",
+            lambda b: matrix_dimension_columns(b, CRITERIA_WORDS),
+        ),
     ),
 )
 
@@ -831,6 +875,10 @@ CURRENT_STATE = Step(
             "现状流程图（步骤 ≥3，含起止）",
             lambda b: has_word(b.text, "流程图")
             and (b.text.count("→") >= 3 or has_word(b.text, "开始") and has_word(b.text, "结束")),
+        ),
+        Rule(
+            "现状流程图含判定/分支（不是直线流程）",
+            lambda b: has_word(b.text, "判定", "是否", "分支", "异常点", "回退", "分流"),
         ),
         Rule(
             "查检表判定标准 / 收集期间 / 样本量",
@@ -895,15 +943,19 @@ ANALYSIS = Step(
     ),
     rules=(
         Rule(
-            "鱼骨图 5M1E/6M ≥4 维",
+            "鱼骨图 5M1E/6M ≥5 维（六维齐全更佳）",
             lambda b: has_word(b.text, "鱼骨图", "特性要因图")
-            and count_distinct(b.text, CAUSE_DIMENSIONS) >= 4,
+            and count_distinct(b.text, CAUSE_DIMENSIONS) >= 5,
         ),
         Rule(
             "要因评价（评分/排序）",
             lambda b: has_word(b.text, "要因评价", "要因分析", "矩阵图")
             and has_number(b.text)
             and has_word(b.text, "筛选", "排序", "总分", "评分"),
+        ),
+        Rule(
+            "要因评价逐维度可见（维度成列或成行）",
+            lambda b: matrix_dimension_columns(b, MATRIX_CAUSE_CRITERIA),
         ),
         Rule(
             "真因验证数据来源",
@@ -930,6 +982,10 @@ COUNTERMEASURE = Step(
             "对策评价维度 ≥3",
             lambda b: count_distinct(b.text, CRITERIA_WORDS) >= 3,
         ),
+        Rule(
+            "对策评价逐维度可见（维度成列或成行）",
+            lambda b: matrix_dimension_columns(b, CRITERIA_WORDS),
+        ),
         Rule("对策评分", lambda b: has_number(b.text)),
         Rule(
             "5W1H 六要素",
@@ -948,6 +1004,10 @@ IMPLEMENTATION = Step(
         Rule("阶段 / PDCA", lambda b: count_distinct(b.text, PHASE_WORDS) >= 2 or has_word(b.text, "阶段")),
         Rule("时间 / 责任人", lambda b: has_word(b.text, "时间", "日期") and has_word(b.text, "责任人", "负责人")),
         Rule("进展记录", lambda b: has_word(b.text, "进展", "进度", "状态", "完成")),
+        Rule(
+            "逐条对策实施记录（对策列，不是只写阶段）",
+            implementation_records_per_countermeasure,
+        ),
         Rule("过程数据跟踪", lambda b: has_number(b.text)),
         Rule("困难与调整", lambda b: has_word(b.text, "困难", "问题", "调整", "改进")),
     ),
@@ -967,6 +1027,10 @@ EFFECT = Step(
         Rule(
             "无形成果（雷达图/能力评分）",
             lambda b: has_word(b.text, "雷达图", "无形成果", "能力评分", "成长"),
+        ),
+        Rule(
+            "无形成果用圈员能力维度（≥5 项）",
+            lambda b: count_distinct(b.text, SOFT_SKILL_WORDS) >= 5,
         ),
         Rule("无形成果量表（维度/评分范围/前后均值）", intangible_scale_documented),
         Rule("统计检验或豁免说明", effect_statistics_documented),
