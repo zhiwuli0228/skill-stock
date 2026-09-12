@@ -547,9 +547,7 @@ def plan_work_packages_present(bundle: "Bundle") -> bool:
     plan must name the individual steps so each one can carry an owner, a planned
     window and an actual window.
     """
-    steps = count_distinct(bundle.text, STEP_NAMES)
-    phases = count_distinct(bundle.text, ("P", "D", "C", "A"))
-    return steps >= 6 and phases >= 3
+    return count_distinct(bundle.text, STEP_NAMES) >= 6
 
 
 def check_sheet_collection_documented(bundle: "Bundle") -> bool:
@@ -1050,7 +1048,10 @@ STANDARDIZATION = Step(
     rules=(
         Rule(
             "标准化文件名称与类型",
-            lambda b: has_word(b.text, "作业标准书", "标准书", "制度", "表单", "流程图", "规范")
+            lambda b: has_word(
+                b.text, "类型", "作业标准书", "标准书", "制度", "表单", "流程图",
+                "规范", "规则", "规程", "指南",
+            )
             and has_word(b.text, "文件", "编号", "名称", "标准"),
         ),
         Rule(

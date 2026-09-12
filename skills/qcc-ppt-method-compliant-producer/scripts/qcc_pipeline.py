@@ -49,7 +49,11 @@ def main() -> int:
     parser.add_argument("--min", dest="minimal", type=Path, default=None, help="最小数据文件（原始事实）")
     parser.add_argument("--defaults", action="store_true", help="用示例数据跑通全流程（自检/演示）")
     parser.add_argument("--workspace", type=Path, default=Path("qcc-workspace"))
-    parser.add_argument("--deck", type=Path, default=None, help="出片后附带做合规校验")
+    parser.add_argument("--template", type=Path, default=None,
+                        help="给出模板则自动按标准形态出稿（推荐）")
+    parser.add_argument("--deck-out", type=Path, default=None,
+                        help="出稿路径（默认 <workspace>/output/qcc-review-ready.pptx）")
+    parser.add_argument("--deck", type=Path, default=None, help="已有稿子：只做合规校验")
     parser.add_argument("--skip-scan", action="store_true")
     args = parser.parse_args()
 
@@ -128,11 +132,32 @@ def main() -> int:
         )
     )
 
+    deck = args.deck
+    if args.template is not None:
+        if not args.template.exists():
+            print(f"模板不存在：{args.template}", file=sys.stderr)
+            return 2
+        deck_out = args.deck_out or (workspace / "output" / "qcc-review-ready.pptx")
+        build = run(
+            scripts / "build_qcc_deck.py",
+            "--data", str(full),
+            "--template", str(args.template),
+            "--out", str(deck_out),
+            "--report", str(report_dir / "deck-build-report.md"),
+        )
+        steps.append(("生成 PPT（标准形态）", "PASS" if build.returncode == 0 else "FAIL",
+                      tail(build.stdout, 2)))
+        if build.returncode != 0:
+            print(build.stdout)
+            print(build.stderr, file=sys.stderr)
+        else:
+            deck = deck_out
+
     compliance_code = None
-    if args.deck is not None:
+    if deck is not None:
         compliance = run(
             scripts / "check_qcc_method_compliance.py",
-            str(args.deck),
+            str(deck),
             "--data", str(full),
             "--report", str(report_dir / "qcc-method-compliance-report.md"),
         )
@@ -151,7 +176,7 @@ def main() -> int:
         f"- 工作目录：`{workspace}`",
         f"- 最小数据：`{minimal}`",
         f"- 完整数据：`{full}`",
-        f"- 合规用 pptx：`{args.deck}`" if args.deck else "- 合规用 pptx：（未提供）",
+        f"- 交付 pptx：`{deck}`" if deck else "- 交付 pptx：（未提供模板或稿子）",
         "",
         "| 阶段 | 状态 | 说明 |",
         "|---|---|---|",

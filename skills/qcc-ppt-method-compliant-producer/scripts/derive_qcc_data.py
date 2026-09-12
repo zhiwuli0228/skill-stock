@@ -125,13 +125,21 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
         result_text = str(row.get("result", ""))
         conclusion = str(row.get("conclusion") or "").strip()
         if not conclusion:
-            if any(word in result_text for word in ("不成立", "无显著", "未发现", "排除", "无关")):
+            if any(
+                word in result_text
+                for word in ("不成立", "无显著", "不显著", "未发现", "排除", "无关", "未达显著")
+            ):
                 conclusion = "不成立"
             else:
                 conclusion = "成立" if result_text else "待确认"
         dimensions.setdefault(dimension, []).append(name)
         if score is not None:
-            cause_scores.append({"cause": name, "score": float(score), "selected": float(score) >= 12})
+            entry = {"cause": name, "score": float(score), "selected": float(score) >= 12}
+            if isinstance(row.get("scores"), dict):
+                entry["scores"] = {
+                    str(key): float(value) for key, value in row["scores"].items()
+                }
+            cause_scores.append(entry)
         verification.append(
             {
                 "cause": name,
@@ -172,6 +180,7 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
     weakness = (review.get("weaknesses") or [""])[0]
     implementation = [
         {
+            "measure": row["measure"],
             "stage": "D 实施",
             "time": row["when"],
             "owner": row["who"],
@@ -212,6 +221,8 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
             "weeks": planned,
             "owners": [str(meta.get("lead", ""))] + owners,
             "progress": {"planned": planned, "actual": actual, "note": str(plan_in.get("note", ""))},
+            "axis": plan_in.get("axis") or [],
+            "schedule": plan_in.get("schedule") or [],
         },
         "current_state": {
             "data_type": str((minimal.get("quality") or {}).get("data_type", "计数值")),
@@ -248,6 +259,8 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
             "before": {"period": str(current.get("period", "")), "defects": before_defects, "total": sample},
             "after": {"period": str(after.get("period", "")), "defects": after_defects, "total": after_total},
             "target": round(target_value, 1),
+            "attainment": round(attainment, 1),
+            "progress_rate": round(progress, 1),
             "statistics": statistics,
             "intangible": minimal.get("intangible") or {},
             "benefit": minimal.get("benefit") or {},
@@ -259,6 +272,7 @@ def derive(minimal: dict) -> tuple[dict, list[str], list[str]]:
             "residual": review.get("residual") or [],
             "next_topic": str(review.get("next_topic", "")),
         },
+        "narrative": minimal.get("narrative") or {},
     }
     return full, notes, missing
 

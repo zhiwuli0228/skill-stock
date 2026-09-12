@@ -1,7 +1,7 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.6.1"
+version: "5.7.0"
 license: MIT
 ---
 
@@ -117,6 +117,32 @@ Use `阶段｜方法` titles from `docs/qcc_page_contract.md`, e.g.
 Generic titles (`问题分析`, `原因分析`, `改进措施`, `成果展示`) may not replace method pages.
 
 ### Step 4 — Apply visual rules
+
+### Step 4A — Generate the deck from data (never hand-roll layouts)
+
+Pages are produced by the bundled builder, so every method appears in its standard form
+and the layout defects acceptance review already rejected cannot come back:
+
+```bash
+python scripts/qcc_pipeline.py --min qcc-workspace/input/qcc-min-data.yaml \
+  --template <skill>/templates/qcc-empty-template.pptx --workspace qcc-workspace
+# 等价于：derive → validate → verify statistics → build_qcc_deck → method compliance
+```
+
+`scripts/build_qcc_deck.py` + `scripts/qcc_deck_lib.py` render the 22 pages from
+`qcc-data.yaml`: 主题评价/要因评价/对策评价 matrices read dimension by dimension, the plan is
+a work-package Gantt with plan and actual bars, the as-is flow has a decision branch, the
+fishbone carries 5M1E, effects show before/after plus benefit, intangible results use
+circle-ability dimensions. The library enforces the guards (≤6×6 tables, text fit, overlap,
+out-of-bounds, shape/char ceilings) and writes `reports/deck-build-report.md`.
+
+Rules:
+
+- **Do not hand-roll page layouts.** If a page looks wrong, fix the data or the library —
+  not the individual deck.
+- Missing data becomes `待补充` **and** a violation line in the build report; read it before
+  delivering.
+- Re-run `scripts/selftest_qcc_build.py` after touching the library or the builder.
 
 - `docs/qcc_method_visual_patterns.md`
 - `docs/visual_enhancement_protocol.md`
@@ -282,6 +308,9 @@ total** (sum of the category counts), while the current-state rate is computed o
 ## 7. Hard Rules
 
 - Ask for a **data folder first**; never open with a questionnaire or a blank YAML template.
+- Never lay out a deck by hand: generate it with `scripts/build_qcc_deck.py`, then fix the
+  data (or the library) rather than editing slide coordinates.
+- Never deliver while `reports/deck-build-report.md` still lists violations.
 - Never treat a scanned value as a fact without a source pointer; never estimate a gap.
 - Never let the model fill computed fields (share / cumulative % / target / attainment /
   progress / p-value); the scripts compute them, and the checker recomputes them.
@@ -310,8 +339,16 @@ Folder-scan intake (default):
 
 ```bash
 python scripts/qcc_scan_inputs.py --dir "D:/QCC资料" --workspace qcc-workspace
-python scripts/qcc_pipeline.py --dir "D:/QCC资料" --workspace qcc-workspace
+python scripts/qcc_pipeline.py --dir "D:/QCC资料" --workspace qcc-workspace \
+  --template <skill>/templates/qcc-empty-template.pptx
+python scripts/qcc_pipeline.py --min qcc-workspace/input/qcc-min-data.yaml \
+  --template <skill>/templates/qcc-empty-template.pptx --workspace qcc-workspace
 python scripts/qcc_pipeline.py --min qcc-workspace/input/qcc-min-data.yaml --deck output/deck.pptx
+python scripts/build_qcc_deck.py --data qcc-workspace/input/qcc-data.yaml \
+  --template <skill>/templates/qcc-empty-template.pptx \
+  --out qcc-workspace/output/qcc-review-ready.pptx \
+  --report qcc-workspace/reports/deck-build-report.md
+python scripts/selftest_qcc_build.py                                       # 出稿回归自测
 python scripts/make_qcc_scan_fixture.py --outdir examples/scan-fixture      # 造一个乱目录做演练
 python scripts/selftest_qcc_scan.py                                        # 扫描路径自检
 python scripts/selftest_qcc_minimal.py                                     # 最小数据路径自检
