@@ -1,7 +1,7 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.3"
+version: "5.4"
 license: MIT
 ---
 
@@ -195,6 +195,29 @@ Page-number badges and the sample-data footer are excluded from numeric extracti
 12. **统计检验或豁免说明** — 效果确认须给出检验方法与 p 值/置信区间；
     声称“显著”必须给出 p 值；不做检验须说明理由（全量/描述性/样本不足）。
 13. **效益核算** — 有形成果须给出投入（人时/费用）、收益（节省工时/费用）与回收期/ROI。
+
+### 6.3 Raw-data statistics recomputation (v5.4)
+
+14. **统计数据复算（第 12 项）** — 当提供原始数据文件时，脚本用自带的
+    χ²（2×2，Yates 校正）或 Welch t 检验复算 p 值，并与文稿声明的 p 值比对；
+    不一致判 `WEAK`。
+
+数据文件约定（`qcc-workspace/input/qcc-data.yaml`，也接受 JSON）：
+
+```yaml
+metric: 处理异常率
+direction: lower          # lower | higher
+before: {period: 2026-01-01..2026-01-31, defects: 126, total: 300}
+after:  {period: 2026-03-01..2026-03-31, defects: 41,  total: 300}
+claimed: {test: chi-square, comparison: "<", p: 0.05}
+```
+
+连续型数据用 `before/after: {n, mean, sd}`。命令：
+
+```bash
+python scripts/verify_qcc_statistics.py --data qcc-workspace/input/qcc-data.yaml
+python scripts/check_qcc_method_compliance.py deck.pptx --data qcc-workspace/input/qcc-data.yaml
+```
 
 ## 7. Hard Rules
 

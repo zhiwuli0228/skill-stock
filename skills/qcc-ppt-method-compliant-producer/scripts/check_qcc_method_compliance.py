@@ -997,6 +997,58 @@ CROSS_STEP = Step(
 ALL_STEPS: tuple[Step, ...] = STEPS + (CROSS_STEP,)
 
 
+STAT_STEP = Step(
+    number=12,
+    phase="统计数据复算",
+    method="χ² / Welch t 检验（原始数据）",
+    matcher=lambda slide: False,
+    rules=(Rule("文稿 p 值与原始数据复算一致", lambda bundle: True),),
+)
+
+
+def statistics_check_result(slides: Sequence[SlideView], data_path: Path) -> StepResult | None:
+    """Recompute the effect statistics from raw data and compare with the deck."""
+    try:
+        import qcc_statistics  # same directory as this script
+    except ImportError:
+        return None
+    text = "\n".join(slide.text for slide in slides)
+    try:
+        raw = data_path.read_text(encoding="utf-8")
+        if data_path.suffix.lower() in {".yaml", ".yml"}:
+            import yaml
+
+            data = yaml.safe_load(raw)
+        else:
+            data = json.loads(raw)
+        result = qcc_statistics.evaluate_dataset(data)
+    except Exception:  # noqa: BLE001 - invalid data must not crash the checker
+        return StepResult(
+            STAT_STEP, "WEAK", [], ["原始数据文件无法解析或字段不完整"], []
+        )
+
+    claimed_match = re.search(r"p\s*[<＜=＝]\s*(0?\.\d+)", text)
+    computed = float(result["p"])
+    evidence = [
+        f"{result['test']} statistic={result['statistic']:.4f} df={result['df']:.2f} p={computed:.6g}",
+        result["conclusion"],
+    ]
+    if claimed_match:
+        claimed = float(claimed_match.group(1))
+        operator = claimed_match.group(0).split("p")[1].strip()[0]
+        if operator in {"<", "＜", "=", "＝"} and operator in {"=", "＝"}:
+            ok = abs(computed - claimed) <= 0.01
+        else:
+            ok = computed <= claimed + 1e-9
+        evidence.append(f"文稿声明 p {claimed}，复算 p {computed:.4g} → {'一致' if ok else '不一致'}")
+        return StepResult(
+            STAT_STEP, "FOUND" if ok else "WEAK", [], [] if ok else ["文稿 p 值与原始数据复算一致"], evidence
+        )
+    return StepResult(
+        STAT_STEP, "WEAK", [], ["文稿 p 值与原始数据复算一致"], evidence + ["文稿未声明 p 值"]
+    )
+
+
 def cross_check_result(slides: Sequence[SlideView]) -> StepResult:
     causes = verified_causes(slides)
     ok = countermeasure_mapping_ok(slides)
@@ -1126,6 +1178,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("pptx", type=Path)
     parser.add_argument("--report", type=Path, default=None)
     parser.add_argument("--json", dest="json_path", type=Path, default=None)
+    parser.add_argument(
+        "--data",
+        type=Path,
+        default=None,
+        help="optional raw dataset (qcc-data.yaml/json) for statistics recomputation",
+    )
     args = parser.parse_args(argv)
 
     if not args.pptx.exists():
@@ -1134,6 +1192,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     slides = read_slides(args.pptx)
     results = evaluate(slides)
+    if args.data is not None:
+        statistics_result = statistics_check_result(slides, args.data)
+        if statistics_result is not None:
+            results.append(statistics_result)
     report = build_report(args.pptx, slides, results)
 
     if args.report:

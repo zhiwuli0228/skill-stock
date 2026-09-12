@@ -1,5 +1,15 @@
 # Changelog
 
+## v5.4 - Raw-data statistics recomputation
+
+- 新增 `scripts/qcc_statistics.py`：自带 χ²（2×2，Yates 校正）与 Welch t 检验，
+  不依赖 scipy（自实现不完全 gamma / 不完全 beta 函数）。
+- 新增 `scripts/verify_qcc_statistics.py`：从原始数据文件复算 p 值并生成报告，
+  可校验文稿声明的 p 值是否与复算一致。
+- 检查脚本新增 `--data`：提供原始数据时追加第 12 项「统计数据复算」，
+  文稿 p 值与复算不一致判 `WEAK`。
+- 新增 `scripts/selftest_qcc_statistics.py` 覆盖：显著性/非显著性/连续型数据/声明不一致。
+
 ## v5.3 - Tool-selection, statistics and cost-benefit gates
 
 - 现状把握：新增「数据与手法选择说明」——须写明数据类型（计数值/计量值）与
