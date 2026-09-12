@@ -634,6 +634,46 @@ def countermeasure_mapping_ok(slides: Sequence[SlideView]) -> bool:
     return True
 
 
+DATA_TYPE_TOKENS = (
+    "计数值", "计量值", "计数型", "计量型", "属性值", "连续型", "离散型",
+)
+TOOL_SELECTION_TOKENS = (
+    "查检表", "柏拉图", "直方图", "散布图", "管制图", "层别", "流程图", "矩阵图", "雷达图",
+)
+STAT_TEST_TOKENS = (
+    "卡方", "χ²", "χ2", "t 检验", "t检验", "秩和", "检验", "p 值", "p值",
+    "p<", "p <", "显著性", "置信区间",
+)
+STAT_WAIVER_TOKENS = (
+    "不做统计检验", "未做统计检验", "不适用统计", "描述性统计", "描述性",
+    "全量数据", "普查", "样本量不足", "豁免",
+)
+
+
+def data_tool_rationale_present(bundle: "Bundle") -> bool:
+    """State the data type and why the chosen QC tools fit it."""
+    return has_word(bundle.text, *DATA_TYPE_TOKENS) and has_word(
+        bundle.text, *TOOL_SELECTION_TOKENS
+    )
+
+
+def effect_statistics_documented(bundle: "Bundle") -> bool:
+    text = bundle.text
+    if has_word(text, *STAT_TEST_TOKENS):
+        if has_word(text, "显著"):
+            has_p = re.search(r"p\s*[<＜=＝]\s*0?\.\d+", text) is not None
+            return has_p or has_word(text, "置信区间")
+        return True
+    return has_word(text, *STAT_WAIVER_TOKENS)
+
+
+def effect_benefit_computed(bundle: "Bundle") -> bool:
+    text = bundle.text
+    cost = has_word(text, "投入", "成本", "费用", "人时", "工时")
+    benefit = has_word(text, "效益", "收益", "节省", "节约", "ROI", "回收期", "年化")
+    return cost and benefit and len(numbers_in(text)) >= 4
+
+
 def placeholders_in(text: str) -> list[str]:
     return [word for word in PLACEHOLDERS if word in text]
 
@@ -756,6 +796,7 @@ CURRENT_STATE = Step(
             and has_word(b.text, "样本", "例数", "n=", "N="),
         ),
         Rule("查检表收集方法与责任人", check_sheet_collection_documented),
+        Rule("数据与手法选择说明（数据类型 → 工具）", data_tool_rationale_present),
         Rule(
             "数据汇总（类别 ≥3 且含频次）",
             lambda b: _table_with_rows(b, 4) or number_count(b.text) >= 3,
@@ -885,6 +926,8 @@ EFFECT = Step(
             lambda b: has_word(b.text, "雷达图", "无形成果", "能力评分", "成长"),
         ),
         Rule("无形成果量表（维度/评分范围/前后均值）", intangible_scale_documented),
+        Rule("统计检验或豁免说明", effect_statistics_documented),
+        Rule("效益核算（成本/效益/回收期）", effect_benefit_computed),
         Rule("改善后优于改善前（方向一致）", effect_direction_improved),
         Rule("目标达成率可由公式复算", effect_attainment_consistent),
         Rule("进步率可由公式复算", effect_progress_consistent),
