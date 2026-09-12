@@ -1,0 +1,24 @@
+version: "3.9"
+skill_role: visual_enhancer
+input_priority:
+  custom_template: 1
+  default_template: 2
+  baseline_ppt: required
+workspace:
+  input_dir: qcc-workspace/input
+  template_dir: qcc-workspace/template
+  output_dir: qcc-workspace/output
+  reports_dir: qcc-workspace/reports
+visual_thresholds:
+  min_body_text_pt: 9
+  preferred_body_text_pt: 10.5
+  max_bottom_bar_count_per_slide: 1
+  content_utilization_warn_below: 0.55
+badge_alignment:
+  require_render_check: true
+  prefer_overlay_textbox: true
+  optical_y_correction: true
+redesign_policy:
+  preserve_pass_pages: true
+  redesign_only_high_risk_pages: true
+  no_global_rewrite_without_reason: true

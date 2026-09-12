@@ -42,6 +42,7 @@ CLAUDE.md                      — 项目规范
 | `explain-code` | 代码讲解类 skill |
 | `qcc-ppt-baseline-producer` | QCC PPT 基线生产 skill（模板、版式、渲染与格式修复） |
 | `qcc-ppt-method-compliant-producer` | **v5.0**：按标准品管圈十步法生产/增强 PPT；合规检查为结构化分析链校验（主题评价、查检表、柏拉图、目标设定、真因验证、对策评价、效果确认、标准化、检讨与改进），只有方法名词、没有数据的 PPT 会被判 `NON-COMPLIANT` |
+| `qcc-ppt-visual-enhancer` | **v3.9.1（独立版）**：第二阶段视觉增强 skill；确定性入口做复制 + 徽标居中 + 报告，页面级重构按协议/清单由智能体执行；自带 workspace 脚手架、渲染门禁与自检 |
 
 ## Skill 规范
 
