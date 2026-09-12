@@ -500,6 +500,140 @@ def effect_post_evidence_present(bundle: "Bundle") -> bool:
     return bool(post and period and sample)
 
 
+def theme_rule_documented(bundle: "Bundle") -> bool:
+    return has_word(
+        bundle.text, "权重", "评分规则", "评分标准", "评价标准", "评分方式", "评分方法"
+    )
+
+
+def plan_vs_actual_present(bundle: "Bundle") -> bool:
+    text = bundle.text
+    has_actual = has_word(text, "实际进度", "实际完成", "实际")
+    has_progress = has_word(text, "完成率", "进度对照", "偏差", "延期", "按计划")
+    return has_actual and has_progress
+
+
+def check_sheet_collection_documented(bundle: "Bundle") -> bool:
+    text = bundle.text
+    method = has_word(text, "收集方法", "记录方式", "数据来源", "采集方式", "逐例记录")
+    owner = has_word(text, "责任人", "负责人", "收集人")
+    return method and owner
+
+
+def intangible_scale_documented(bundle: "Bundle") -> bool:
+    text = bundle.text
+    scale = has_word(text, "量表", "分制", "评分范围")
+    before_after = has_word(text, "活动前", "改善前") and has_word(text, "活动后", "改善后")
+    dimensions = has_word(text, "维度", "能力")
+    return scale and before_after and dimensions
+
+
+def standardization_versioned(bundle: "Bundle") -> bool:
+    text = bundle.text
+    number = has_word(text, "编号")
+    version = has_word(text, "版本", "版次", "V1", "v1")
+    effective = has_word(text, "生效", "发布日期")
+    return number and version and effective
+
+
+def standardization_audit_loop(bundle: "Bundle") -> bool:
+    return has_word(
+        bundle.text, "稽核结果", "回写", "效果维持", "复查", "再发防止", "维持"
+    )
+
+
+def verified_causes(slides: Sequence[SlideView]) -> list[str]:
+    bundle = Bundle([slide for slide in slides if ANALYSIS.matcher(slide)])
+    causes: list[str] = []
+    for table in bundle.tables:
+        if not table:
+            continue
+        header = [normalize(cell) for cell in table[0]]
+        conclusion_column = next(
+            (index for index, cell in enumerate(header) if "结论" in cell), None
+        )
+        if conclusion_column is None:
+            continue
+        for row in table[1:]:
+            if conclusion_column >= len(row):
+                continue
+            conclusion = normalize(row[conclusion_column])
+            if "成立" in conclusion and "不成立" not in conclusion:
+                causes.append(normalize(row[0]))
+    return causes
+
+
+def countermeasure_rows(slides: Sequence[SlideView]) -> list[tuple[str, str, str, bool]]:
+    bundle = Bundle([slide for slide in slides if COUNTERMEASURE.matcher(slide)])
+    rows: list[tuple[str, str, str, bool]] = []
+    for table in bundle.tables:
+        if not table:
+            continue
+        header = [normalize(cell) for cell in table[0]]
+        measure_column = next(
+            (
+                index
+                for index, cell in enumerate(header)
+                if "对策" in cell or "措施" in cell or "What" in cell
+            ),
+            None,
+        )
+        if measure_column is None:
+            continue
+        cause_column = next(
+            (index for index, cell in enumerate(header) if "真因" in cell or "Why" in cell),
+            None,
+        )
+        if cause_column is None:
+            # Without a cause-mapping column the table cannot prove the mapping.
+            continue
+        decision_column = next(
+            (
+                index
+                for index, cell in enumerate(header)
+                if "取舍" in cell or "采纳" in cell or "总分" in cell
+            ),
+            None,
+        )
+        for row in table[1:]:
+            if measure_column >= len(row):
+                continue
+            measure = normalize(row[measure_column])
+            if not measure:
+                continue
+            mapping = (
+                normalize(row[cause_column])
+                if cause_column is not None and cause_column < len(row)
+                else ""
+            )
+            decision = (
+                normalize(row[decision_column])
+                if decision_column is not None and decision_column < len(row)
+                else ""
+            )
+            adopted = "不采纳" not in decision and "放弃" not in decision
+            rows.append((measure, mapping, decision, adopted))
+    return rows
+
+
+def countermeasure_mapping_ok(slides: Sequence[SlideView]) -> bool:
+    causes = verified_causes(slides)
+    rows = countermeasure_rows(slides)
+    if not causes or not rows:
+        return False
+    adopted = [row for row in rows if row[3]]
+    if not adopted:
+        return False
+    for _, mapping, _, _ in adopted:
+        if not mapping or mapping in {"—", "-", "–", "待补充"}:
+            return False
+        if not any(
+            cause and (cause in mapping or mapping in cause) for cause in causes
+        ):
+            return False
+    return True
+
+
 def placeholders_in(text: str) -> list[str]:
     return [word for word in PLACEHOLDERS if word in text]
 
@@ -580,6 +714,7 @@ THEME = Step(
         ),
         Rule("评分数字", lambda b: has_number(b.text)),
         Rule("排序或选定结论", lambda b: has_word(b.text, "排序", "总分", "选定", "采纳", "得分")),
+        Rule("主题评价规则（权重/评分标准）", theme_rule_documented),
     ),
 )
 
@@ -596,6 +731,7 @@ ACTIVITY_PLAN = Step(
             or re.search(r"\d+\s*(?:周|月|/\d+)", b.text) is not None,
         ),
         Rule("负责人", lambda b: has_word(b.text, "负责人", "责任人", "圈员")),
+        Rule("计划 vs 实际进度对照", plan_vs_actual_present),
     ),
 )
 
@@ -619,6 +755,7 @@ CURRENT_STATE = Step(
             and has_word(b.text, "期间", "收集", "日期")
             and has_word(b.text, "样本", "例数", "n=", "N="),
         ),
+        Rule("查检表收集方法与责任人", check_sheet_collection_documented),
         Rule(
             "数据汇总（类别 ≥3 且含频次）",
             lambda b: _table_with_rows(b, 4) or number_count(b.text) >= 3,
@@ -747,6 +884,7 @@ EFFECT = Step(
             "无形成果（雷达图/能力评分）",
             lambda b: has_word(b.text, "雷达图", "无形成果", "能力评分", "成长"),
         ),
+        Rule("无形成果量表（维度/评分范围/前后均值）", intangible_scale_documented),
         Rule("改善后优于改善前（方向一致）", effect_direction_improved),
         Rule("目标达成率可由公式复算", effect_attainment_consistent),
         Rule("进步率可由公式复算", effect_progress_consistent),
@@ -772,6 +910,8 @@ STANDARDIZATION = Step(
             and has_word(b.text, "责任人", "负责人", "执行人"),
         ),
         Rule("教育训练与推广", lambda b: has_word(b.text, "教育训练", "培训", "训练", "推广")),
+        Rule("标准化文件编号/版本/生效日期", standardization_versioned),
+        Rule("稽核结果回写 / 效果维持", standardization_audit_loop),
     ),
 )
 
@@ -801,6 +941,28 @@ STEPS: tuple[Step, ...] = (
     STANDARDIZATION,
     REVIEW,
 )
+
+
+CROSS_STEP = Step(
+    number=11,
+    phase="跨步骤一致性",
+    method="对策↔已验证真因",
+    matcher=lambda slide: False,
+    rules=(Rule("对策↔已验证真因逐条映射", lambda bundle: True),),
+)
+
+
+def cross_check_result(slides: Sequence[SlideView]) -> StepResult:
+    causes = verified_causes(slides)
+    ok = countermeasure_mapping_ok(slides)
+    evidence = [f"已验证真因：{', '.join(causes)}"] if causes else []
+    return StepResult(
+        CROSS_STEP,
+        "FOUND" if ok else "WEAK",
+        [],
+        [] if ok else ["对策↔已验证真因逐条映射"],
+        evidence,
+    )
 # --------------------------------------------------------------------------- #
 # Evaluation
 # --------------------------------------------------------------------------- #
@@ -840,7 +1002,9 @@ def evaluate_step(step: Step, slides: Sequence[SlideView]) -> StepResult:
 
 
 def evaluate(slides: Sequence[SlideView]) -> list[StepResult]:
-    return [evaluate_step(step, slides) for step in STEPS]
+    results = [evaluate_step(step, slides) for step in STEPS]
+    results.append(cross_check_result(slides))
+    return results
 
 
 def overall_status(results: Sequence[StepResult]) -> str:

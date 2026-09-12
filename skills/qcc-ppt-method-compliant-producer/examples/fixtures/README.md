@@ -17,3 +17,6 @@ Regenerate and verify:
 python scripts/make_qcc_method_fixtures.py --outdir examples/fixtures
 python scripts/selftest_qcc_method_compliance.py --fixtures examples/fixtures
 ```
+
+The checker reports 11 rows: the ten method steps plus
+`11 跨步骤一致性`（对策↔已验证真因逐条映射）。

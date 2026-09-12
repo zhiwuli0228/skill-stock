@@ -1,7 +1,7 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.1"
+version: "5.2"
 license: MIT
 ---
 
@@ -177,6 +177,16 @@ The checker now recomputes the analysis instead of only looking for keywords:
    sample size are required.
 
 Page-number badges and the sample-data footer are excluded from numeric extraction.
+
+### 6.1 Extended gates (v5.2)
+
+5. **主题选定** — 评价规则可查：权重 / 评分标准 / 评分方式。
+6. **活动计划** — 必须有「计划 vs 实际」进度对照（完成率 / 偏差 / 延期）。
+7. **查检表** — 必须写明收集方法与责任人（记录方式 / 数据来源 + 责任人）。
+8. **无形成果** — 必须给出评价量表（分制/评分范围）、维度与前后均值。
+9. **标准化** — 文件必须有编号、版本、生效日期，并写明稽核结果回写 / 效果维持。
+10. **跨步骤一致性（第 11 项）** — 每条采纳对策必须映射到一条已验证真因；
+    映射缺失或对不上判 `WEAK`。
 
 ## 7. Hard Rules
 
