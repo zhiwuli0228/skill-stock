@@ -1,5 +1,28 @@
 # Changelog
 
+## v5.6 - Folder-scan intake (默认路径：给文件夹，不给表格)
+
+- 新增 `scripts/qcc_scan_inputs.py`：扫描使用者的数据目录，登记清单并抽取
+  xlsx/xlsm（按工作表）、csv/tsv、docx（段落+表格）、pptx（文本+表格）、pdf（逐页文本）、
+  txt/md/json/yaml；把抽到的块与十步法必备字段匹配，输出
+  `qcc-min-data.draft.yaml`（只含证据里确实存在的值）、`reports/data-scan-report.md`、
+  `reports/data-scan-evidence.json`（供模型读取的完整证据索引）。
+  识别覆盖：类别频次、层别、主题评分矩阵、对策表（含 5W1H/评分列）、真因验证表、
+  成本效益、检讨四问、课题/圈组/圈长/周期/方向、圈能力、计划 vs 实际。
+- 新增 `scripts/derive_qcc_data.py`：原始事实 → 频次降序重排、占比、累计%、80% 改善重点、
+  目标值、目标达成率、进步率、χ²（Yates）/Welch t 的 p 值，输出推导报告。
+- 新增 `scripts/qcc_wizard.py`：约 20 项原始事实的交互向导（支持 `--defaults` / `--answers`）。
+- 新增 `scripts/qcc_pipeline.py`：一条命令串联 扫描 → 推导 → 校验 → 统计 →（可选）合规校验，
+  输出 `reports/pipeline-summary.md`（PASS / FAIL / GAP 汇总），数据未就绪不会静默出片。
+- 新增 `scripts/make_qcc_scan_fixture.py`：生成"乱目录"演练素材（含旧格式 .xls 与图片）。
+- 新增自测：`selftest_qcc_scan.py`（找到该找的、不编不该有的、未就绪草稿不放行）、
+  `selftest_qcc_minimal.py`（示例事实跑通全链路，且推导值与公式一致）。
+- 新增 `docs/qcc_data_requirements.md`（字段级说明）与 `docs/qcc_llm_extraction_prompt.md`
+  （交给模型的抽取提示与正/反例）。
+- `docs/qcc_data_intake.md` 重写为四条路径，A=数据目录扫描（默认），B=向导，C=单表，D=完整 YAML。
+- 扫描/抽取纪律：值必须可回溯来源；缺失留 `null` 并报缺口；矛盾数值两处并列交人工裁决；
+  合计行不算事实；计算类字段一律由脚本推导，模型不得自行填写。
+
 ## v5.5 - Data intake workflow
 
 - 新增 `docs/qcc_data_intake.md`：三种数据提供方式（YAML / CSV 表格 / 现有材料）、
