@@ -1,5 +1,18 @@
 # qcc-ppt-method-compliant-producer v5.0
 
+## Deck builder (v5.7, use this instead of hand-rolling pages)
+
+```bash
+python scripts/qcc_pipeline.py --min qcc-workspace/input/qcc-min-data.yaml \
+  --template templates/qcc-empty-template.pptx --workspace qcc-workspace
+```
+
+`scripts/build_qcc_deck.py` renders the 22 standard pages from `qcc-data.yaml`;
+`scripts/qcc_deck_lib.py` owns the palette/grid and the guards (≤6×6 tables, text fit,
+overlap, out-of-bounds, shape/char ceilings). Missing data renders as `待补充` and is listed in
+`reports/deck-build-report.md` — never invented. Regression guard:
+`python scripts/selftest_qcc_build.py`.
+
 This Skill produces or enhances QCC (品管圈) PPT decks that satisfy the **standard
 ten-step QCC method** — not just decks that show method names.
 

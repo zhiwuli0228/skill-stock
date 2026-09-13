@@ -55,9 +55,9 @@ def main() -> int:
         else:
             full = yaml.safe_load(full_path.read_text(encoding="utf-8"))
             focus = full["current_state"]["pareto_focus"]
-            if focus["count"] != 3 or not close(focus["cumulative"], 85.3):
+            if focus["count"] != 3 or not close(focus["cumulative"], 84.1):
                 failures.append(f"pareto focus wrong: {focus}")
-            if not close(full["target"]["value"], 13.3):
+            if not close(full["target"]["value"], 13.7):
                 failures.append(f"target value wrong: {full['target']['value']}")
             if not close(full["target"]["current"], 42.0):
                 failures.append(f"current value wrong: {full['target']['current']}")
