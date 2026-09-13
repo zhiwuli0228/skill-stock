@@ -1,7 +1,7 @@
 ---
 name: qcc-ppt-method-compliant-producer
 description: Produce or enhance QCC (品管圈) PPT decks that must satisfy the standard ten-step QCC method with real analysis chains, not just method names. Use when a QCC presentation must include theme evaluation, activity plan, current-state data collection with check sheet and Pareto, target setting, cause analysis with true-cause verification, countermeasure evaluation with 5W1H, effect confirmation (tangible and intangible), standardization, and review/improvement — with data-completeness gates that block "method theater" decks.
-version: "5.7.0"
+version: "5.7.1"
 license: MIT
 ---
 
@@ -67,6 +67,11 @@ Given an existing baseline PPT, first build a method/evidence coverage table. Ad
 missing or weak steps. Visual polishing alone is not acceptable.
 
 ## 4. Required Inputs
+
+**User-facing guide (start here when a user asks how to use this Skill):**
+`docs/qcc_usage_guide.md` — the three ways to supply data, copy-paste prompts, the exact
+commands, the acceptance checklist and the FAQ. Hand the guide's Prompt A (folder) or
+Prompt B (data file) to the user instead of inventing a new workflow.
 
 ```text
 DATA-DIR/                                     # ★ preferred: the user's own folder of records

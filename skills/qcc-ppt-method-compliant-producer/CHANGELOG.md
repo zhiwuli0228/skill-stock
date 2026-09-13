@@ -1,5 +1,16 @@
 # Changelog
 
+## v5.7.1 - 使用者指南 + 渲染脚本进 skill
+
+- 新增 `docs/qcc_usage_guide.md`：面向使用者的完整指南——三种给资料的方式（给目录 /
+  给数据 / 向导）、三段可直接复制的 Prompt（目录自动探索、只给数据文件、只有口头事实）、
+  命令清单、验收清单、七条常见问题（保密、缺数据、公司模板、页数、口径写反、图片数据、
+  改哪里）。
+- 新增 `scripts/render_qcc_deck.py`：PPTX → PDF（PowerPoint COM）→ 逐页 PNG（poppler）→
+  总览拼图（Pillow），缺依赖时给出明确的手动兜底，不再依赖工作区里的临时脚本。
+- `qcc_pipeline.py` 新增 `--render`：一条命令走完 推导 → 校验 → 统计 → 出稿 → 合规 → 渲染。
+- SKILL.md / README 指向使用者指南，并明确"把指南里的 Prompt A / B 交给使用者"。
+
 ## v5.7.0 - 出稿器进 skill：把"标准形态"变成生成器而不是人工排版
 
 前几轮的修复只改了那一份 PPT；本轮把修好的形态固化成 skill 内的**生成器**，
