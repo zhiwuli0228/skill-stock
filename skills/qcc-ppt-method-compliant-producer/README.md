@@ -1,5 +1,8 @@
 # qcc-ppt-method-compliant-producer v5.0
 
+**使用者指南：[docs/qcc_usage_guide.md](docs/qcc_usage_guide.md)**（三种给资料的方式、
+可直接复制的 Prompt、命令清单、验收清单、常见问题）。
+
 ## Deck builder (v5.7, use this instead of hand-rolling pages)
 
 ```bash

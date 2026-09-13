@@ -53,6 +53,10 @@ def main() -> int:
                         help="给出模板则自动按标准形态出稿（推荐）")
     parser.add_argument("--deck-out", type=Path, default=None,
                         help="出稿路径（默认 <workspace>/output/qcc-review-ready.pptx）")
+    parser.add_argument("--render", action="store_true",
+                        help="出稿后渲染 PDF/PNG/拼图，便于逐页视觉验收")
+    parser.add_argument("--allow-incomplete", action="store_true",
+                        help="数据未就绪时仍出一份缺口预览稿（默认拦住不出稿）")
     parser.add_argument("--deck", type=Path, default=None, help="已有稿子：只做合规校验")
     parser.add_argument("--skip-scan", action="store_true")
     args = parser.parse_args()
@@ -74,7 +78,8 @@ def main() -> int:
             (
                 "扫描数据目录",
                 "PASS" if result.returncode == 0 else "FAIL",
-                f"证据索引 {report_dir / 'data-scan-evidence.json'}｜{tail(result.stdout, 1)}",
+                f"报告 {report_dir / 'data-scan-report.md'}；证据索引 "
+                f"{report_dir / 'data-scan-evidence.json'}",
             )
         )
         if minimal is None and draft.exists():
@@ -133,7 +138,17 @@ def main() -> int:
     )
 
     deck = args.deck
-    if args.template is not None:
+    data_ready = validate.returncode == 0
+    if args.template is not None and not data_ready and not args.allow_incomplete:
+        steps.append(
+            (
+                "生成 PPT（标准形态）",
+                "SKIP",
+                "数据未就绪：按 reports/data-readiness.md 补齐后重跑；"
+                "确需缺口预览稿可加 --allow-incomplete",
+            )
+        )
+    elif args.template is not None:
         if not args.template.exists():
             print(f"模板不存在：{args.template}", file=sys.stderr)
             return 2
@@ -170,6 +185,20 @@ def main() -> int:
             )
         )
 
+    if args.render and deck is not None:
+        render = run(
+            scripts / "render_qcc_deck.py",
+            str(deck),
+            "--outdir", str(workspace),
+        )
+        steps.append(
+            (
+                "渲染 PDF/PNG",
+                "PASS" if render.returncode == 0 else "FAIL",
+                tail(render.stdout, 2) or tail(render.stderr, 2),
+            )
+        )
+
     lines = [
         "# QCC 数据流水线汇总",
         "",
@@ -186,7 +215,8 @@ def main() -> int:
     if any(status == "GAP" for _, status, _ in steps):
         lines += [
             "",
-            "> 数据未就绪：按 `reports/data-readiness.md` 的清单补齐 `qcc-min-data.yaml` 后重跑。",
+            f"> 数据未就绪：按 `{report_dir / 'data-readiness.md'}` 的清单补齐 "
+            f"`{minimal}` 后重跑（确需缺口预览稿加 `--allow-incomplete`）。",
         ]
     lines.append("")
     summary = "\n".join(lines)
